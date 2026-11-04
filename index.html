@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>知课 · 控制台</title>
+<style>
+  :root{
+    --blue:#1e63d6; --blue-600:#1a56bb; --blue-50:#eef3fe;
+    --ink:#131a26; --ink-2:#3c4658; --ink-3:#6b7688; --ink-4:#98a2b3;
+    --line:#e6eaf1; --bg:#f5f7fb; --card:#fff;
+    --ok:#12a06a; --ok-bg:#e8f7f0; --bad:#d64545; --bad-bg:#fdecec; --warn:#d98324;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --blue:#4d90f5; --blue-600:#3d7fe0; --blue-50:#16273f;
+      --ink:#e8eef6; --ink-2:#c4cdda; --ink-3:#8b97a8; --ink-4:#5e6b7d;
+      --line:#243040; --bg:#0e141d; --card:#161e29;
+      --ok:#2ec98a; --ok-bg:#10301f; --bad:#f07171; --bad-bg:#3a1818; --warn:#eaa24c;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;
+    padding:20px 14px calc(40px + env(safe-area-inset-bottom));
+  }
+  .wrap{max-width:560px;margin:0 auto}
+  header{display:flex;align-items:center;gap:10px;margin:4px 2px 18px}
+  .logo{
+    width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+    background:linear-gradient(150deg,#1e63d6,#2f7de8);color:#fff;flex:none;
+  }
+  .logo svg{width:22px;height:22px}
+  h1{margin:0;font-size:17px;font-weight:600;letter-spacing:-.01em}
+  header span{display:block;font-size:12px;color:var(--ink-3);font-weight:400}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:18px;margin-bottom:14px;
+    box-shadow:0 1px 2px rgba(19,26,38,.04),0 8px 24px -18px rgba(19,26,38,.35);
+  }
+  .st{display:flex;align-items:center;gap:12px}
+  .dot{width:12px;height:12px;border-radius:50%;background:var(--ink-4);flex:none}
+  .dot.on{background:var(--ok);box-shadow:0 0 0 4px rgba(18,160,106,.14)}
+  .dot.off{background:var(--bad);box-shadow:0 0 0 4px rgba(214,69,69,.14)}
+  .st b{font-size:19px;font-weight:600;letter-spacing:-.01em}
+  .st small{display:block;font-size:12px;color:var(--ink-3);font-weight:400}
+  .meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+  .meta div{background:var(--bg);border-radius:11px;padding:10px 12px}
+  .meta em{display:block;font-style:normal;font-size:11.5px;color:var(--ink-4)}
+  .meta b{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--ink-2);word-break:break-all}
+  h2{font-size:13.5px;margin:0 0 12px;font-weight:600;color:var(--ink)}
+  .seg{display:flex;gap:8px}
+  .seg button{
+    flex:1;height:46px;border-radius:12px;border:1px solid var(--line);
+    background:var(--card);color:var(--ink-2);font:inherit;font-size:14px;font-weight:500;
+    cursor:pointer;transition:.16s;
+  }
+  .seg button.on{background:var(--ok-bg);border-color:transparent;color:var(--ok);font-weight:600}
+  .seg button.bad.on{background:var(--bad-bg);color:var(--bad)}
+  label{display:block;margin-top:14px}
+  label em{display:block;font-style:normal;font-size:12px;color:var(--ink-3);margin-bottom:6px}
+  input,textarea{
+    width:100%;border:1px solid var(--line);border-radius:11px;background:var(--bg);
+    color:var(--ink);font:inherit;font-size:13.5px;padding:10px 12px;outline:none;
+  }
+  textarea{min-height:76px;resize:vertical}
+  textarea.code{font-family:var(--mono);font-size:12px;line-height:1.65;min-height:96px}
+  input:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-50)}
+  .row{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}
+  .btn{
+    flex:1;min-width:140px;height:44px;border-radius:12px;border:1px solid transparent;
+    background:var(--blue);color:#fff;font:inherit;font-weight:500;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  }
+  .btn.ghost{background:var(--card);border-color:var(--line);color:var(--ink-2)}
+  .btn:active{transform:translateY(1px)}
+  .btn:disabled{opacity:.55}
+  pre{
+    margin:14px 0 0;padding:12px 14px;border-radius:11px;background:var(--bg);
+    font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--ink-2);
+    overflow:auto;white-space:pre-wrap;word-break:break-all;
+  }
+  .tip{font-size:12px;color:var(--ink-3);line-height:1.75;margin:12px 0 0}
+  .tip b{color:var(--ink-2)}
+  details{margin-top:12px}
+  summary{cursor:pointer;font-size:13px;color:var(--ink-3);list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸ ";color:var(--ink-4)}
+  details[open] summary::before{content:"▾ "}
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translate(-50%,16px);
+    background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;
+    opacity:0;pointer-events:none;transition:.2s;z-index:9;
+  }
+  .toast.on{opacity:1;transform:translate(-50%,0)}
+  .badge{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--blue-50);color:var(--blue-600);font-weight:600}
+
+  /* 用户端预览：把 App 里那张拦截页按比例缩小，方便一眼确认「用户看到的是什么」 */
+  .phone{
+    margin-top:12px;border:1px solid var(--line);border-radius:16px;background:var(--bg);
+    padding:22px 18px;text-align:center;
+  }
+  .phone i{
+    display:grid;place-items:center;width:38px;height:38px;margin:0 auto 12px;
+    border-radius:50%;background:linear-gradient(150deg,#6b7a90,#48566b);color:#fff;
+  }
+  .phone i svg{width:19px;height:19px}
+  .phone b{display:block;font-size:13.5px;color:var(--ink)}
+  .phone span{display:block;margin-top:6px;font-size:11.5px;line-height:1.65;color:var(--ink-3)}
+  .phone u{
+    display:block;margin-top:14px;height:34px;line-height:34px;border-radius:9px;
+    background:var(--blue);color:#fff;font-size:12.5px;text-decoration:none;
+  }
+  .goal{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+  .goal div{background:var(--bg);border-radius:11px;padding:10px 12px;font-size:12px;color:var(--ink-3);line-height:1.6}
+  .goal b{display:block;color:var(--ink);font-size:12.5px;margin-bottom:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="logo"><svg viewBox="0 0 32 32" fill="none"><path d="M9 21V11l7 5 7-5v10" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    <div><h1>知课 · 控制台</h1><span>全局状态 · 界面热更新</span></div>
+  </header>
+
+  <div class="card">
+    <div class="st">
+      <i class="dot" id="dot"></i>
+      <div><b id="st-title">正在读取…</b><small id="st-sub">连接配置源</small></div>
+    </div>
+    <div class="meta">
+      <div><em>最近更新</em><b id="m-upd">—</b></div>
+      <div><em>最低可用版本</em><b id="m-min">—</b></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>全局状态</h2>
+    <div class="seg">
+      <button id="b-on" data-v="on" class="on">所有用户可用</button>
+      <button id="b-off" data-v="off" class="bad">所有用户不可用</button>
+    </div>
+    <p class="tip" style="margin:10px 0 0">
+      作用于<b>全部已安装设备</b>：不可用期间 App 只显示「连接不上服务器」，
+      和一次普通的网络故障没有任何区别；恢复后自动回到正常界面，不需要用户做任何事。
+    </p>
+    <div class="goal">
+      <div><b>全部可用</b>按钮按下即恢复，最迟 3 分钟生效</div>
+      <div><b>全部不可用</b>按钮按下即暂停，最迟 3 分钟生效</div>
+    </div>
+    <label><em>暂停时给用户看的说明（可选，留空则只显示通用文案）</em>
+      <textarea id="i-reason" placeholder="例如：服务维护中，预计今晚恢复。"></textarea>
+    </label>
+    <label><em>最低可用版本号（低于此值的客户端会被拦下，填 0 表示不限）</em>
+      <input id="i-min" type="number" min="0" step="1" value="0">
+    </label>
+
+    <div class="row">
+      <button class="btn" id="b-save">提交全局状态</button>
+      <button class="btn ghost" id="b-copy">复制 JSON</button>
+      <button class="btn ghost" id="b-open">在 GitHub 编辑</button>
+    </div>
+
+    <pre id="preview">—</pre>
+  </div>
+
+  <div class="card">
+    <h2>界面热更新</h2>
+    <p class="tip" style="margin:0 0 4px">
+      不改包、不发版，直接给已安装的设备换外观或加小功能。客户端启动时先套用上次拿到的补丁，
+      再在后台拉新的；拉不到就继续用旧的，绝不会因为补丁出问题而打不开。
+    </p>
+    <div class="goal">
+      <div><b>样式补丁</b>间距、配色、字号、显隐</div>
+      <div><b>脚本补丁</b>纯前端的小功能，可操作 DOM</div>
+      <div><b>开关默认值</b>决定实验室功能的初始状态</div>
+      <div><b>版本号</b>递增才会重新应用一次脚本</div>
+    </div>
+    <label><em>补丁版本号（整数，每次发布 +1）</em>
+      <input id="h-v" type="number" min="1" step="1" value="1">
+    </label>
+    <label><em>样式补丁（CSS，可为空）</em>
+      <textarea id="h-css" class="code" placeholder=".kpi.accent{background:linear-gradient(150deg,#1e63d6,#4d90f5)}"></textarea>
+    </label>
+    <label><em>脚本补丁（JS，可为空；同一版本号只执行一次）</em>
+      <textarea id="h-js" class="code" placeholder="/* 例：在概览顶部插一条公告 */&#10;document.querySelector('#home-kpis')?.insertAdjacentHTML('afterend','<p style=&quot;font-size:12px;color:#6b7688&quot;>本周三停课</p>');"></textarea>
+    </label>
+    <label><em>开关默认值（JSON，例如 {"examcd": false}）</em>
+      <textarea id="h-flags" class="code" placeholder="{}">{}</textarea>
+    </label>
+    <label><em>说明（仅供自己记录）</em>
+      <input id="h-note" placeholder="例如：修正成绩页间距">
+    </label>
+    <div class="row">
+      <button class="btn" id="h-save">发布补丁</button>
+      <button class="btn ghost" id="h-clear">清空补丁</button>
+    </div>
+    <pre id="h-preview">—</pre>
+    <p class="tip">
+      发布后，用户下次打开 App（或回到前台）时生效。样式补丁会立刻重绘，脚本补丁需要版本号变化。
+      想回滚：把三个内容框清空，版本号 +1，再发布一次。
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>用户端会看到什么</h2>
+    <div class="phone">
+      <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+        stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.8a16 16 0 0 1 20 0"/>
+        <path d="M5 12.5a11 11 0 0 1 14 0"/><path d="M8.5 16.2a6 6 0 0 1 7 0"/>
+        <path d="M12 19.5h.01"/><path d="M3 3l18 18"/></svg></i>
+      <b>连接不上服务器</b>
+      <span>请检查网络后重试。如果网络正常，可能是服务正在维护，稍后再试。</span>
+      <u>重试</u>
+    </div>
+    <p class="tip">
+      只有这一段：没有「已暂停」「权限受限」之类的字样，不出现版本号，也不显示原因。
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>怎么生效</h2>
+    <p class="tip">
+      · App 启动时、回到前台时、以及每 <b>3 分钟</b>读一次 <b>guard.json</b>（取不到时退避到 9 / 27 / 30 分钟）；<br>
+      · 状态切换最迟 <b>3 分钟</b>覆盖全部在线设备；<br>
+      · 读不到配置时一律<b>按可用处理</b>，不会因为断网把所有人挡在外面；<br>
+      · 热更新读 <b>hot.json</b>，与状态文件在同一个公开仓库里，源码仓库保持私有。
+    </p>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>写入令牌（只存在本机浏览器）</summary>
+      <label><em>GitHub 细粒度令牌 · 仅需 zk-guard 仓库 Contents 读写</em>
+        <input id="i-token" type="password" autocomplete="off" placeholder="github_pat_…">
+      </label>
+      <p class="tip">
+        令牌只保存在这台设备的 localStorage，页面本身是静态的，不会上传到任何地方。
+        不填也能用：点「复制 JSON」→「在 GitHub 编辑」→ 粘贴 → 提交，效果一样。
+      </p>
+      <button class="btn ghost" id="b-forget" style="margin-top:12px">清除本机令牌</button>
+    </details>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+var REPO = "PWHbut/zk-guard", BRANCH = "main";
+var FILE = "guard.json", HFile = "hot.json";
+var RAW = function(n){
+  return [
+    "https://cdn.jsdelivr.net/gh/" + REPO + "@" + BRANCH + "/" + n,
+    "https://raw.githubusercontent.com/" + REPO + "/" + BRANCH + "/" + n
+  ];
+};
+var PUSH = function(n){ return "https://api.github.com/repos/" + REPO + "/contents/" + n; };
+
+var state = { enabled: true, reason: "", minBuild: 0, updated: "" };
+var hot = { v: 1, css: "", js: "", flags: {}, note: "", updated: "" };
+
+function $(s){ return document.querySelector(s); }
+function toast(t){
+  var el = $("#toast"); el.textContent = t; el.classList.add("on");
+  clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove("on"); }, 2400);
+}
+function today(){
+  var d = new Date(), p = function(n){ return (n<10?"0":"")+n; };
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes());
+}
+function payload(){
+  return { enabled: !!state.enabled, minBuild: Number(state.minBuild)||0,
+           reason: state.reason || "", updated: today() };
+}
+function hotPayload(){
+  var flags = {};
+  try { flags = JSON.parse($("#h-flags").value || "{}") || {}; } catch (e) { throw new Error("开关默认值不是合法 JSON"); }
+  return { v: Number($("#h-v").value) || 1, css: $("#h-css").value || "",
+           js: $("#h-js").value || "", flags: flags,
+           note: $("#h-note").value || "", updated: today() };
+}
+
+function render(){
+  var on = state.enabled;
+  $("#dot").className = "dot " + (on ? "on" : "off");
+  $("#st-title").textContent = on ? "所有用户可用" : "所有用户不可用";
+  $("#st-sub").textContent = on ? "App 正常工作" : "App 显示「连接不上服务器」";
+  $("#m-upd").textContent = state.updated || "—";
+  $("#m-min").textContent = state.minBuild ? String(state.minBuild) : "不限";
+  $("#b-on").classList.toggle("on", on);
+  $("#b-off").classList.toggle("on", !on);
+  $("#i-reason").value = state.reason || "";
+  $("#i-min").value = state.minBuild || 0;
+  $("#preview").textContent = JSON.stringify(payload(), null, 2);
+}
+function renderHot(){
+  $("#h-v").value = hot.v || 1;
+  $("#h-css").value = hot.css || "";
+  $("#h-js").value = hot.js || "";
+  $("#h-flags").value = JSON.stringify(hot.flags || {}, null, 0);
+  $("#h-note").value = hot.note || "";
+  try { $("#h-preview").textContent = JSON.stringify(hotPayload(), null, 2); }
+  catch (e) { $("#h-preview").textContent = "—"; }
+}
+
+async function readJson(name){
+  var urls = RAW(name);
+  for (var i = 0; i < urls.length; i++){
+    try {
+      var r = await fetch(urls[i] + "?t=" + Date.now(), { cache: "no-store" });
+      if (!r.ok) continue;
+      var j = await r.json();
+      if (j && typeof j === "object") return j;
+    } catch (e) { /* 换源 */ }
+  }
+  return null;
+}
+
+async function load(){
+  var g = await readJson(FILE);
+  if (g && typeof g.enabled === "boolean"){
+    state = { enabled: g.enabled, reason: g.reason || "",
+              minBuild: Number(g.minBuild)||0, updated: g.updated || "" };
+    render();
+  } else {
+    $("#st-title").textContent = "读取失败";
+    $("#st-sub").textContent = "检查网络后刷新；仍失败可直接去 GitHub 编辑";
+  }
+  var h = await readJson(HFile);
+  if (h){
+    hot = { v: Number(h.v)||1, css: h.css || "", js: h.js || "",
+            flags: h.flags || {}, note: h.note || "", updated: h.updated || "" };
+    renderHot();
+  }
+}
+
+function b64(str){
+  var bytes = new TextEncoder().encode(str), bin = "";
+  for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+
+function token(){
+  return ($("#i-token").value || "").trim() || localStorage.getItem("zk-gh") || "";
+}
+
+async function push(name, obj, msg, btn, idle){
+  var tk = token();
+  if (!tk){ toast("先在「写入令牌」里填入，或用「复制 JSON + 在 GitHub 编辑」"); openDetails(); return; }
+  localStorage.setItem("zk-gh", tk);
+  btn.disabled = true; btn.textContent = "提交中…";
+  try {
+    var head = { Authorization: "Bearer " + tk, Accept: "application/vnd.github+json" };
+    var cur = await fetch(PUSH(name) + "?ref=" + BRANCH, { headers: head });
+    if (cur.status === 401 || cur.status === 403) throw new Error("令牌无效或权限不足");
+    if (!cur.ok) throw new Error("读取失败 HTTP " + cur.status);
+    var info = await cur.json();
+    var body = {
+      message: msg + " " + today(),
+      content: b64(JSON.stringify(obj, null, 2) + "\n"),
+      sha: info.sha, branch: BRANCH
+    };
+    var put = await fetch(PUSH(name), {
+      method: "PUT",
+      headers: Object.assign({ "Content-Type": "application/json" }, head),
+      body: JSON.stringify(body)
+    });
+    if (!put.ok){
+      var e = await put.json().catch(function(){ return {}; });
+      throw new Error((e && e.message) || ("写入失败 HTTP " + put.status));
+    }
+    // 顺手刷一次 CDN 缓存，让改动尽快生效
+    fetch("https://purge.jsdelivr.net/gh/" + REPO + "@" + BRANCH + "/" + name).catch(function(){});
+    toast("已提交，最迟 3 分钟内全量生效");
+    setTimeout(load, 1500);
+  } catch (err) {
+    toast(err.message || "提交失败");
+  } finally {
+    btn.disabled = false; btn.textContent = idle;
+  }
+}
+
+function openDetails(){
+  var d = document.querySelector("details");
+  if (d) d.open = true;
+}
+
+document.querySelector(".seg").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if (!b) return;
+  state.enabled = b.dataset.v === "on";
+  render();
+});
+$("#i-reason").addEventListener("input", function(){ state.reason = this.value; render(); });
+$("#i-min").addEventListener("input", function(){ state.minBuild = Number(this.value)||0; render(); });
+
+["h-v","h-css","h-js","h-flags","h-note"].forEach(function(id){
+  $("#" + id).addEventListener("input", renderHot);
+});
+
+$("#b-save").onclick = function(){
+  push(FILE, payload(), "chore(guard): " + (state.enabled ? "恢复" : "暂停"), this, "提交全局状态");
+};
+$("#b-copy").onclick = function(){
+  var txt = JSON.stringify(payload(), null, 2) + "\n";
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(function(){ toast("已复制，去 GitHub 粘贴覆盖"); },
+                                                                  function(){ toast("复制失败，请手动选中"); });
+  else toast("请手动选中下方内容复制");
+};
+$("#b-open").onclick = function(){
+  window.open("https://github.com/" + REPO + "/edit/" + BRANCH + "/" + FILE, "_blank", "noopener");
+};
+
+$("#h-save").onclick = function(){
+  var obj;
+  try { obj = hotPayload(); } catch (e) { toast(e.message); return; }
+  push(HFile, obj, "feat(hot): v" + obj.v, this, "发布补丁");
+};
+$("#h-clear").onclick = function(){
+  $("#h-css").value = ""; $("#h-js").value = ""; $("#h-flags").value = "{}"; $("#h-note").value = "";
+  $("#h-v").value = (Number($("#h-v").value) || 1) + 1;
+  renderHot();
+  toast("已清空，版本号 +1；点「发布补丁」即可回滚");
+};
+$("#b-forget").onclick = function(){
+  localStorage.removeItem("zk-gh"); $("#i-token").value = "";
+  toast("已清除本机令牌");
+};
+
+if (localStorage.getItem("zk-gh")) $("#i-token").value = localStorage.getItem("zk-gh");
+load();
+</script>
+</body>
+</html>
