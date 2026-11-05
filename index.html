@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>知课 · 控制台 v5.6</title>
-<meta name="description" content="知课客户端的全局状态、界面热更新与密钥签名控制台">
+<title>知课 · 控制台 v5.7</title>
+<meta name="description" content="知课客户端的全局开关、按版本控制策略、界面热更新与密钥签名控制台">
 <style>
   :root{
     --blue:#1e63d6; --blue-600:#1a56bb; --blue-50:#eef3fe;
     --ink:#131a26; --ink-2:#3c4658; --ink-3:#6b7688; --ink-4:#98a2b3;
     --line:#e6eaf1; --bg:#f5f7fb; --card:#fff;
-    --ok:#12a06a; --ok-bg:#e8f7f0; --bad:#d64545; --bad-bg:#fdecec; --warn:#d98324;
+    --ok:#12a06a; --ok-bg:#e8f7f0; --bad:#d64545; --bad-bg:#fdecec; --warn:#d98324; --warn-bg:#fdf3e6;
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
   }
@@ -20,7 +20,7 @@
       --blue:#4d90f5; --blue-600:#3d7fe0; --blue-50:#16273f;
       --ink:#e8eef6; --ink-2:#c4cdda; --ink-3:#8b97a8; --ink-4:#5e6b7d;
       --line:#243040; --bg:#0e141d; --card:#161e29;
-      --ok:#2ec98a; --ok-bg:#10301f; --bad:#f07171; --bad-bg:#3a1818; --warn:#eaa24c;
+      --ok:#2ec98a; --ok-bg:#10301f; --bad:#f07171; --bad-bg:#3a1818; --warn:#eaa24c; --warn-bg:#35240f;
     }
   }
   *{box-sizing:border-box}
@@ -29,7 +29,7 @@
     font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;
     padding:20px 14px calc(40px + env(safe-area-inset-bottom));
   }
-  .wrap{max-width:560px;margin:0 auto}
+  .wrap{max-width:600px;margin:0 auto}
   header{display:flex;align-items:center;gap:10px;margin:4px 2px 18px}
   .logo{
     width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
@@ -43,49 +43,79 @@
     padding:18px;margin-bottom:14px;
     box-shadow:0 1px 2px rgba(19,26,38,.04),0 8px 24px -18px rgba(19,26,38,.35);
   }
+  .card h2{display:flex;align-items:center;gap:8px}
+  .num{
+    width:21px;height:21px;border-radius:7px;background:var(--blue-50);color:var(--blue-600);
+    font-size:11.5px;font-weight:700;display:grid;place-items:center;flex:none;
+  }
   .st{display:flex;align-items:center;gap:12px}
   .dot{width:12px;height:12px;border-radius:50%;background:var(--ink-4);flex:none}
   .dot.on{background:var(--ok);box-shadow:0 0 0 4px rgba(18,160,106,.14)}
   .dot.off{background:var(--bad);box-shadow:0 0 0 4px rgba(214,69,69,.14)}
   .st b{font-size:19px;font-weight:600;letter-spacing:-.01em}
   .st small{display:block;font-size:12px;color:var(--ink-3);font-weight:400}
-  .meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+  .meta{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:16px}
   .meta div{background:var(--bg);border-radius:11px;padding:10px 12px}
   .meta em{display:block;font-style:normal;font-size:11.5px;color:var(--ink-4)}
   .meta b{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--ink-2);word-break:break-all}
+  @media (max-width:460px){ .meta{grid-template-columns:1fr 1fr} }
   h2{font-size:13.5px;margin:0 0 12px;font-weight:600;color:var(--ink)}
   .seg{display:flex;gap:8px}
   .seg button{
-    flex:1;height:46px;border-radius:12px;border:1px solid var(--line);
-    background:var(--card);color:var(--ink-2);font:inherit;font-size:14px;font-weight:500;
+    flex:1;height:44px;border-radius:12px;border:1px solid var(--line);
+    background:var(--card);color:var(--ink-2);font:inherit;font-size:13.5px;font-weight:500;
     cursor:pointer;transition:.16s;
   }
   .seg button.on{background:var(--ok-bg);border-color:transparent;color:var(--ok);font-weight:600}
   .seg button.bad.on{background:var(--bad-bg);color:var(--bad)}
+  .seg button.warn.on{background:var(--warn-bg);color:var(--warn)}
+  /* 一键控制：主操作放大，减少一次「选完再点提交」 */
+  .bigseg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 14px}
+  .bigseg button{
+    min-height:64px;border-radius:14px;border:1px solid var(--line);background:var(--bg);
+    color:var(--ink-2);font:inherit;cursor:pointer;padding:12px 10px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+    transition:.16s;
+  }
+  .bigseg button b{font-size:14.5px;font-weight:600;color:var(--ink)}
+  .bigseg button small{font-size:11.5px;color:var(--ink-3);line-height:1.4}
+  .bigseg button.go{background:var(--ok-bg);border-color:transparent}
+  .bigseg button.go b{color:var(--ok)}
+  .bigseg button.stop{background:var(--bad-bg);border-color:transparent}
+  .bigseg button.stop b{color:var(--bad)}
+  .bigseg button:active{transform:translateY(1px)}
   label{display:block;margin-top:14px}
   label em{display:block;font-style:normal;font-size:12px;color:var(--ink-3);margin-bottom:6px}
-  input,textarea{
+  input,textarea,select{
     width:100%;border:1px solid var(--line);border-radius:11px;background:var(--bg);
     color:var(--ink);font:inherit;font-size:13.5px;padding:10px 12px;outline:none;
   }
-  textarea{min-height:76px;resize:vertical}
+  select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-3) 50%),linear-gradient(135deg,var(--ink-3) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:32px}
+  textarea{min-height:70px;resize:vertical}
   textarea.code{font-family:var(--mono);font-size:12px;line-height:1.65;min-height:96px}
-  input:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-50)}
+  input:focus,textarea:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-50)}
   .row{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}
+  .row>*{flex:1;min-width:130px}
   .btn{
-    flex:1;min-width:140px;height:44px;border-radius:12px;border:1px solid transparent;
+    flex:1;min-width:130px;height:44px;border-radius:12px;border:1px solid transparent;
     background:var(--blue);color:#fff;font:inherit;font-weight:500;cursor:pointer;
     display:inline-flex;align-items:center;justify-content:center;gap:6px;
   }
   .btn.ghost{background:var(--card);border-color:var(--line);color:var(--ink-2)}
+  .btn.danger{background:var(--bad)}
   .btn:active{transform:translateY(1px)}
   .btn:disabled{opacity:.55}
-  pre{
-    margin:14px 0 0;padding:12px 14px;border-radius:11px;background:var(--bg);
-    font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--ink-2);
-    overflow:auto;white-space:pre-wrap;word-break:break-all;
+  .mini{
+    border:1px solid var(--line);background:var(--bg);color:var(--ink-3);border-radius:8px;
+    font:inherit;font-size:12px;padding:4px 8px;cursor:pointer;line-height:1.4;
   }
-  .tip{font-size:12px;color:var(--ink-3);line-height:1.75;margin:12px 0 0}
+  .mini:hover{color:var(--blue-600);border-color:var(--blue)}
+  pre{
+    margin:12px 0 0;padding:12px 14px;border-radius:11px;background:var(--bg);
+    font-family:var(--mono);font-size:11.5px;line-height:1.7;color:var(--ink-2);
+    overflow:auto;white-space:pre-wrap;word-break:break-all;max-height:280px;
+  }
+  .tip{font-size:12px;color:var(--ink-3);line-height:1.75;margin:10px 0 0}
   .tip b{color:var(--ink-2)}
   details{margin-top:12px}
   summary{cursor:pointer;font-size:13px;color:var(--ink-3);list-style:none}
@@ -95,12 +125,64 @@
   .toast{
     position:fixed;left:50%;bottom:26px;transform:translate(-50%,16px);
     background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;
-    opacity:0;pointer-events:none;transition:.2s;z-index:9;
+    opacity:0;pointer-events:none;transition:.2s;z-index:9;max-width:88vw;text-align:center;
   }
   .toast.on{opacity:1;transform:translate(-50%,0)}
   .badge{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--blue-50);color:var(--blue-600);font-weight:600}
-
-  /* 用户端预览：把 App 里那张拦截页按比例缩小，方便一眼确认「用户看到的是什么」 */
+  .verbar{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    margin:-6px 2px 14px;padding:9px 12px;border-radius:11px;
+    background:var(--blue-50);color:var(--blue-600);font-size:12px;
+  }
+  .verbar b{font-family:var(--mono);font-weight:600}
+  .lnk{
+    border:0;background:transparent;color:var(--blue-600);font:inherit;font-size:12px;
+    font-weight:600;cursor:pointer;padding:4px 2px;text-decoration:underline;text-underline-offset:3px;
+  }
+  .doclinks{display:grid;gap:8px}
+  .doclinks a{
+    display:block;padding:11px 13px;border:1px solid var(--line);border-radius:11px;
+    background:var(--bg);color:var(--ink-2);font-size:13px;text-decoration:none;font-weight:500;
+    transition:border-color .16s,background .16s;
+  }
+  .doclinks a:hover{border-color:var(--blue);background:var(--blue-50);color:var(--blue-600)}
+  .keyquick{display:grid;gap:8px;margin-top:10px}
+  .keyquick div{background:var(--bg);border-radius:11px;padding:10px 12px}
+  .keyquick b{display:block;font-size:12.5px;color:var(--ink);margin-bottom:2px}
+  .keyquick span{font-size:12px;color:var(--ink-3);line-height:1.6}
+  .keyquick code{font-family:var(--mono);font-size:11.5px;color:var(--blue-600);background:var(--blue-50);padding:1px 5px;border-radius:5px}
+  .checkline{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:12px;color:var(--ink-3)}
+  .checkline input{width:auto;flex:none;accent-color:var(--blue)}
+  .checkline a{color:var(--blue-600);text-decoration:underline;text-underline-offset:3px}
+  /* 版本规则 */
+  .rules{display:grid;gap:8px;margin-top:12px}
+  .rule{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;
+    background:var(--bg);border:1px solid var(--line);
+  }
+  .rule .ri{font-family:var(--mono);font-size:11.5px;color:var(--ink-4);flex:none;width:18px}
+  .rule .rb{flex:1;min-width:0}
+  .rule .rb b{display:block;font-size:12.5px;font-weight:600;color:var(--ink)}
+  .rule .rb span{display:block;font-size:11.5px;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rule .ra{display:flex;gap:5px;flex:none}
+  .chip{font-size:11px;padding:2px 7px;border-radius:6px;font-weight:600;white-space:nowrap}
+  .chip.allow{background:var(--ok-bg);color:var(--ok)}
+  .chip.block{background:var(--bad-bg);color:var(--bad)}
+  .chip.upgrade{background:var(--warn-bg);color:var(--warn)}
+  .empty{padding:14px;text-align:center;font-size:12px;color:var(--ink-4);background:var(--bg);border-radius:11px;margin-top:12px}
+  .simbox{
+    margin-top:12px;padding:12px 14px;border-radius:11px;background:var(--blue-50);
+    border:1px solid transparent;font-size:12.5px;line-height:1.7;color:var(--ink-2);
+  }
+  .simbox b{color:var(--blue-600)}
+  .impact{
+    margin-top:10px;padding:11px 13px;border-radius:11px;background:var(--bg);
+    font-size:12px;line-height:1.8;color:var(--ink-2);
+  }
+  .impact b{color:var(--ink)}
+  .goal{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+  .goal div{background:var(--bg);border-radius:11px;padding:10px 12px;font-size:12px;color:var(--ink-3);line-height:1.6}
+  .goal b{display:block;color:var(--ink);font-size:12.5px;margin-bottom:2px}
   .phone{
     margin-top:12px;border:1px solid var(--line);border-radius:16px;background:var(--bg);
     padding:22px 18px;text-align:center;
@@ -116,45 +198,20 @@
     display:block;margin-top:14px;height:34px;line-height:34px;border-radius:9px;
     background:var(--blue);color:#fff;font-size:12.5px;text-decoration:none;
   }
-  .goal{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
-  .goal div{background:var(--bg);border-radius:11px;padding:10px 12px;font-size:12px;color:var(--ink-3);line-height:1.6}
-  .goal b{display:block;color:var(--ink);font-size:12.5px;margin-bottom:2px}
-
-  /* v5.6：版本条、配置源、文档与密钥入口 */
-  .verbar{
-    display:flex;align-items:center;justify-content:space-between;gap:10px;
-    margin:-6px 2px 14px;padding:9px 12px;border-radius:11px;
-    background:var(--blue-50);color:var(--blue-600);font-size:12px;
+  .note{
+    margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--warn-bg);
+    font-size:12px;line-height:1.7;color:var(--ink-2);
   }
-  .verbar b{font-family:var(--mono);font-weight:600}
-  .lnk{
-    border:0;background:transparent;color:var(--blue-600);font:inherit;font-size:12px;
-    font-weight:600;cursor:pointer;padding:4px 2px;text-decoration:underline;text-underline-offset:3px;
-  }
-  .meta-3{grid-template-columns:repeat(3,1fr)}
-  @media (max-width:420px){ .meta-3{grid-template-columns:1fr 1fr} }
-  .doclinks{display:grid;gap:8px}
-  .doclinks a{
-    display:block;padding:11px 13px;border:1px solid var(--line);border-radius:11px;
-    background:var(--bg);color:var(--ink-2);font-size:13px;text-decoration:none;font-weight:500;
-    transition:border-color .16s,background .16s;
-  }
-  .doclinks a:hover{border-color:var(--blue);background:var(--blue-50);color:var(--blue-600)}
-  .keyquick{display:grid;gap:8px;margin-top:10px}
-  .keyquick div{background:var(--bg);border-radius:11px;padding:10px 12px}
-  .keyquick b{display:block;font-size:12.5px;color:var(--ink);margin-bottom:2px}
-  .keyquick span{font-size:12px;color:var(--ink-3);line-height:1.6}
-  .keyquick code{font-family:var(--mono);font-size:11.5px;color:var(--blue-600);background:var(--blue-50);padding:1px 5px;border-radius:5px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <span class="logo"><svg viewBox="0 0 32 32" fill="none"><path d="M9 21V11l7 5 7-5v10" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-    <div><h1>知课 · 控制台 <span class="badge" id="ver-badge">v5.6.0</span></h1><span>全局状态 · 界面热更新 · 密钥签名</span></div>
+    <div><h1>知课 · 控制台 <span class="badge" id="ver-badge">v5.7.0</span></h1><span>防止软件被滥用 · 全版本控制 · 密钥签名</span></div>
   </header>
   <div class="verbar">
-    <span>控制台 <b>v5.6.0</b> · 适配客户端 <b>v5.6</b></span>
+    <span>控制台 <b>v5.7.0</b> · 客户端 <b>v5.7+ 全版本</b></span>
     <button type="button" id="b-refresh" class="lnk" title="绕过 CDN 缓存重新读取最新配置">强制刷新配置</button>
   </div>
 
@@ -163,56 +220,111 @@
       <i class="dot" id="dot"></i>
       <div><b id="st-title">正在读取…</b><small id="st-sub">连接配置源</small></div>
     </div>
-    <div class="meta meta-3">
-      <div><em>最近更新</em><b id="m-upd">—</b></div>
-      <div><em>最低可用版本</em><b id="m-min">—</b></div>
+    <div class="meta">
+      <div><em>默认策略</em><b id="m-def">—</b></div>
+      <div><em>版本规则</em><b id="m-rules">—</b></div>
       <div><em>配置源</em><b id="m-src">读取中…</b></div>
+      <div><em>rev / 更新</em><b id="m-upd">—</b></div>
     </div>
   </div>
 
   <div class="card">
-    <h2>全局状态</h2>
-    <div class="seg">
-      <button id="b-on" data-v="on" class="on">恢复所有用户使用</button>
-      <button id="b-off" data-v="off" class="bad">停止所有用户使用</button>
-    </div>
-    <p class="tip" style="margin:10px 0 0">
+    <h2><span class="num">1</span>一键控制（所有版本）</h2>
+    <p class="tip" style="margin:0">
       <b>控制台只用来防止软件被滥用</b>：不做用户管理、不收集任何数据、不影响本机已缓存的内容。
-      两个按钮分别停止 / 恢复<b>全部已安装设备</b>的使用资格；停止期间 App 只显示「连接不上服务器」，
-      和一次普通网络故障没有区别，恢复后自动回到正常界面。最迟 1 分钟覆盖在线设备。
+      两个按钮按下即发布，不再需要「选完再点提交」。
     </p>
-    <div class="goal">
-      <div><b>恢复所有用户使用</b> · 按下即恢复，无需密钥</div>
-      <div><b>停止所有用户使用</b> · 需填控制台密钥生成签名，提交前会二次确认</div>
+    <div class="bigseg">
+      <button type="button" id="b-on" class="go"><b>恢复所有用户使用</b><small>清空版本规则 · 全部放行 · 无需密钥</small></button>
+      <button type="button" id="b-off" class="stop"><b>停止所有用户使用</b><small>所有版本停用 · 需密钥签名</small></button>
     </div>
-    <label><em>暂停时给用户看的说明（可选，留空则只显示通用文案）</em>
-      <textarea id="i-reason" placeholder="例如：服务维护中，预计今晚恢复。"></textarea>
+    <label><em>控制台密钥（停止 / 按版本控制时必填；填一次并勾选记住即可）</em>
+      <input id="i-key" type="password" autocomplete="off" placeholder="zk-ctrl-…">
     </label>
-    <label><em>最低可用版本号（低于此值的客户端会被拦下，填 0 表示不限）</em>
-      <input id="i-min" type="number" min="0" step="1" value="0">
-    </label>
-    <label><em>控制台密钥（选「不可用」暂停全部用户时必填；与 ZK-GUARD/key.json 的 hash 对应）</em>
-      <input id="i-key" type="password" autocomplete="off" placeholder="填入密钥才会生成签名并暂停">
-    </label>
-    <p class="tip" style="margin:8px 0 0">
-      密钥明文<b>只存在你本机</b>，从不写进本仓库；这里输入后仅用于本地生成签名。
-      忘记密钥或不确定存放位置，见下方「使用说明与密钥位置」。
+    <div class="checkline">
+      <input type="checkbox" id="i-remember" checked><label for="i-remember" style="margin:0">在这台设备记住密钥</label>
+      <a href="https://github.com/PWHbut/zk-guard/blob/main/KEY.md" target="_blank" rel="noopener">密钥是什么 / 放哪 / 怎么用 →</a>
+    </div>
+    <div class="note">
+      <b>密钥说明</b>：一串 <code>zk-ctrl-</code> 开头的口令，用来给控制指令签名，防止公开仓库被恶改后误停全体用户。
+      明文副本放在<b>私有仓库</b> <code>PWHbut/zhike</code> 的 <code>CONSOLE_KEY.txt</code>（只有仓库所有者可见）与本机
+      <code>/workspace/CONSOLE_KEY.txt</code>；本公开仓库的 <code>key.json</code> 只放 SHA-256 哈希。
+      密钥只在浏览器本地参与计算，不会随请求上传。
+    </div>
+    <details>
+      <summary>可选：停用原因（仅自己记录，不会显示给用户）</summary>
+      <label><em>说明</em><textarea id="i-reason" placeholder="例如：服务维护中，预计今晚恢复。"></textarea></label>
+    </details>
+    <p class="tip">停用期间 App 只显示「连接不上服务器」，与一次普通网络故障没有区别；恢复后自动回到正常界面。最迟 1 分钟覆盖在线设备。</p>
+  </div>
+
+  <div class="card">
+    <h2><span class="num">2</span>按版本控制（客户端再怎么升级都管得住）</h2>
+    <p class="tip" style="margin:0">
+      规则按<b>版本码区间</b>匹配，数组里靠前的优先；没命中任何规则就走<b>默认策略</b>。
+      把默认策略设成「停用」，再给当前版本加一条「放行」，之后发布的任何新版本都会自动落入停用——
+      <b>控制台不用跟着升级</b>。开区间（最高版本填 0）可直接覆盖未来版本。
     </p>
 
     <div class="row">
-      <button class="btn" id="b-save">提交全局状态</button>
-      <button class="btn ghost" id="b-copy">复制 JSON</button>
-      <button class="btn ghost" id="b-open">在 GitHub 编辑</button>
+      <label style="margin:0"><em>选版本（自动填区间）</em>
+        <select id="r-ver"></select>
+      </label>
+    </div>
+    <div class="row">
+      <label style="margin:0"><em>最低版本码（0 不限）</em><input id="r-min" type="number" min="0" step="1" value="0"></label>
+      <label style="margin:0"><em>最高版本码（0 不限）</em><input id="r-max" type="number" min="0" step="1" value="0"></label>
+    </div>
+    <label><em>这条规则怎么处理</em>
+      <div class="seg" id="r-mode">
+        <button type="button" data-m="allow">放行</button>
+        <button type="button" data-m="block" class="bad on">停用</button>
+        <button type="button" data-m="upgrade" class="warn">提示升级</button>
+      </div>
+    </label>
+    <label><em>备注（自己看的，例如「v5.6 有缺陷」）</em><input id="r-note" placeholder="可留空"></label>
+    <div class="row"><button class="btn ghost" id="r-add">＋ 添加规则</button></div>
+
+    <div class="rules" id="rules"></div>
+
+    <label><em>默认策略（未命中任何规则时生效，也是未来新版本的兜底）</em>
+      <div class="seg" id="d-mode">
+        <button type="button" data-m="allow" class="on">全部放行</button>
+        <button type="button" data-m="block" class="bad">全部停用</button>
+        <button type="button" data-m="upgrade" class="warn">提示升级</button>
+      </div>
+    </label>
+
+    <div class="simbox" id="sim">
+      <b>规则模拟器</b> · 在下面填一个版本码，立刻看这台客户端会怎样：
+      <div class="row" style="margin-top:8px">
+        <input id="s-build" type="number" min="0" step="1" value="58" style="flex:2">
+        <button class="btn ghost" id="s-go" style="flex:1;min-width:90px">模拟</button>
+      </div>
+      <div id="sim-out" style="margin-top:8px">—</div>
     </div>
 
-    <pre id="preview">—</pre>
+    <div class="impact" id="impact">影响摘要：—</div>
+
+    <div class="row">
+      <button class="btn" id="b-publish">发布控制策略（需要密钥）</button>
+      <button class="btn ghost" id="b-reset">一键恢复全部可用</button>
+    </div>
+    <details>
+      <summary>查看将要写入的 guard.json</summary>
+      <pre id="preview">—</pre>
+      <div class="row">
+        <button class="btn ghost" id="b-copy">复制 JSON</button>
+        <button class="btn ghost" id="b-open">在 GitHub 编辑</button>
+      </div>
+    </details>
+    <p class="tip">「提示升级」会显示需要更新并提供下载入口，不再伪装成网络故障；其余两种模式保持原有表现。</p>
   </div>
 
   <div class="card">
-    <h2>界面热更新</h2>
+    <h2><span class="num">3</span>界面热更新</h2>
     <p class="tip" style="margin:0 0 4px">
-      不改包、不发版，直接给已安装的设备换外观或加小功能。客户端启动时先套用上次拿到的补丁，
-      再在后台拉新的；拉不到就继续用旧的，绝不会因为补丁出问题而打不开。
+      不改包、不发版，直接给已安装的设备换外观或加小功能。客户端启动时先套用上次拿到的补丁，再在后台拉新的。
     </p>
     <div class="goal">
       <div><b>样式补丁</b>间距、配色、字号、显隐</div>
@@ -220,35 +332,21 @@
       <div><b>开关默认值</b>决定实验室功能的初始状态</div>
       <div><b>版本号</b>递增才会重新应用一次脚本</div>
     </div>
-    <label><em>补丁版本号（整数，每次发布 +1）</em>
-      <input id="h-v" type="number" min="1" step="1" value="1">
-    </label>
-    <label><em>样式补丁（CSS，可为空）</em>
-      <textarea id="h-css" class="code" placeholder=".kpi.accent{background:linear-gradient(150deg,#1e63d6,#4d90f5)}"></textarea>
-    </label>
-    <label><em>脚本补丁（JS，可为空；同一版本号只执行一次）</em>
-      <textarea id="h-js" class="code" placeholder="/* 例：在概览顶部插一条公告 */&#10;document.querySelector('#home-kpis')?.insertAdjacentHTML('afterend','<p style=&quot;font-size:12px;color:#6b7688&quot;>本周三停课</p>');"></textarea>
-    </label>
-    <label><em>开关默认值（JSON，例如 {"examcd": false}）</em>
-      <textarea id="h-flags" class="code" placeholder="{}">{}</textarea>
-    </label>
-    <label><em>说明（仅供自己记录）</em>
-      <input id="h-note" placeholder="例如：修正成绩页间距">
-    </label>
+    <label><em>补丁版本号（整数，每次发布 +1）</em><input id="h-v" type="number" min="1" step="1" value="1"></label>
+    <label><em>样式补丁（CSS，可为空）</em><textarea id="h-css" class="code" placeholder=".kpi.accent{background:linear-gradient(150deg,#1e63d6,#4d90f5)}"></textarea></label>
+    <label><em>脚本补丁（JS，可为空；同一版本号只执行一次）</em><textarea id="h-js" class="code" placeholder="/* 例：在概览顶部插一条公告 */"></textarea></label>
+    <label><em>开关默认值（JSON，例如 {"examcd": false}）</em><textarea id="h-flags" class="code" placeholder="{}">{}</textarea></label>
+    <label><em>说明（仅供自己记录）</em><input id="h-note" placeholder="例如：修正成绩页间距"></label>
+    <div class="row" style="gap:10px">
+      <label style="flex:1;min-width:150px;margin:0"><em>最低客户端版本码（0 不限）</em><input id="h-min" type="number" min="0" value="0"></label>
+      <label style="flex:1;min-width:150px;margin:0"><em>最高客户端版本码（0 不限）</em><input id="h-max" type="number" min="0" value="0"></label>
+    </div>
     <div class="row">
       <button class="btn" id="h-save">发布补丁</button>
       <button class="btn ghost" id="h-clear">清空补丁</button>
     </div>
-    <div class="row" style="gap:10px;flex-wrap:wrap;margin:8px 0 0">
-      <label style="flex:1;min-width:150px"><em>最低客户端版本码（0 不限）</em><input id="h-min" type="number" min="0" value="0"></label>
-      <label style="flex:1;min-width:150px"><em>最高客户端版本码（0 不限）</em><input id="h-max" type="number" min="0" value="0"></label>
-    </div>
-    <p class="tip" style="margin:6px 0 0">在上方「控制台密钥」填了密钥时，补丁会自动附带签名；客户端验签不通过会忽略这份补丁。</p>
-    <pre id="h-preview">—</pre>
-    <p class="tip">
-      发布后，用户下次打开 App（或回到前台）时生效。样式补丁会立刻重绘，脚本补丁需要版本号变化。
-      想回滚：把三个内容框清空，版本号 +1，再发布一次。
-    </p>
+    <p class="tip">填了密钥时补丁会自动附带签名，客户端验签不通过会忽略这份补丁。想回滚：清空三个内容框、版本号 +1 再发布。</p>
+    <details><summary>查看补丁 JSON</summary><pre id="h-preview">—</pre></details>
   </div>
 
   <div class="card">
@@ -262,41 +360,42 @@
       <span>请检查网络后重试。如果网络正常，可能是服务正在维护，稍后再试。</span>
       <u>重试</u>
     </div>
-    <p class="tip">
-      只有这一段：没有「已暂停」「权限受限」之类的字样，不出现版本号，也不显示原因。
-    </p>
+    <p class="tip">默认「停用」只有这一段：没有「已暂停」「权限受限」之类的字样，不出现版本号，也不显示原因。只有显式选择「提示升级」才会显示更新提示。</p>
   </div>
 
   <div class="card">
-    <h2>怎么生效</h2>
+    <h2>怎么生效 · 兼容性</h2>
     <p class="tip">
       · App 启动时、回到前台时、以及每 <b>1 分钟</b>读一次 <b>guard.json</b>（取不到时退避到 3 / 9 / 27 分钟）；<br>
       · 状态切换最迟 <b>1 分钟</b>覆盖全部在线设备；<br>
-      · 暂停（不可用）必须是<b>带密钥签名</b>的指令，否则客户端忽略——公开仓库被误改也不会让全体掉线；<br>
+      · 控制指令必须带<b>密钥签名</b>（<code>auth</code> 旧公式 + <code>authV2</code> 整份策略），否则客户端忽略；<br>
       · 读不到配置时一律<b>按可用处理</b>，不会因为断网把所有人挡在外面；<br>
-      · 热更新读 <b>hot.json</b>，与状态文件在同一个公开仓库里，源码仓库保持私有；<br>
-      · 控制台与客户端都从 <b>4 个源并发读取并取最新</b>，避免某个 CDN 缓存旧值导致「看着像旧版」；<br>
-      · 若页面本身显示的版本号不是 <b>v5.6.0</b>，说明浏览器缓存了旧页面，强制刷新（手机长按刷新 / 电脑 Ctrl+Shift+R）即可。
+      · <b>v5.6 及更早客户端</b>只认全局开关（<code>enabled</code>），仍能被「停止 / 恢复所有用户」控制，但读不懂按版本规则；<br>
+      · <b>v5.7 及以后客户端</b>支持按版本码区间精确控制；再往后的新版本由默认策略与开区间规则自动覆盖，控制台无需改动；<br>
+      · 控制台与客户端都从 <b>4 个源并发读取并取最新</b>，避免某个 CDN 缓存旧值；<br>
+      · 若页面版本号不是 <b>v5.7.0</b>，说明浏览器缓存了旧页面，强制刷新即可。
     </p>
   </div>
 
   <div class="card">
     <h2>使用说明与密钥位置</h2>
     <p class="tip" style="margin:0 0 10px">
-      完整操作步骤、每个按钮的作用、生效时间、密钥三处存放位置与轮换方法、常见故障排查，
-      都写在本仓库的文档里（公开仓库只放位置说明，<b>绝不含明文密钥</b>）。
+      完整操作步骤、密钥是什么 / 存放在哪里 / 如何使用与轮换、版本控制协议字段说明、常见故障排查，都写在仓库文档里。
+      <b>明文密钥只放在私有源码仓库，公开仓库只有哈希与位置说明。</b>
     </p>
     <div class="doclinks">
+      <a href="https://github.com/PWHbut/zk-guard/blob/main/KEY.md" target="_blank" rel="noopener">🔑 密钥是什么 · 存放位置 · 使用与轮换</a>
+      <a href="https://github.com/PWHbut/zk-guard/blob/main/POLICY.md" target="_blank" rel="noopener">🧩 版本控制协议（字段、优先级、兼容矩阵）</a>
       <a href="https://github.com/PWHbut/zk-guard/blob/main/GUIDE.md" target="_blank" rel="noopener">📖 控制台使用说明（详细）</a>
-      <a href="https://github.com/PWHbut/zk-guard/blob/main/KEY.md" target="_blank" rel="noopener">🔑 密钥存放位置与轮换</a>
-      <a href="https://github.com/PWHbut/zk-guard#readme" target="_blank" rel="noopener">📄 仓库说明</a>
+      <a href="https://github.com/PWHbut/zhike/blob/main/CONSOLE_KEY.txt" target="_blank" rel="noopener">🔒 明文密钥（私有仓库，仅仓库所有者可见）</a>
     </div>
     <details style="margin-top:12px">
       <summary>密钥放在哪（速览）</summary>
       <div class="keyquick">
-        <div><b>① 明文密钥</b><span>只在你本机保存（本地文件 / 密码管理器），不上传任何仓库</span></div>
-        <div><b>② 密钥哈希</b><span>本仓库 <code>key.json</code> 的 <code>hash</code>，仅供控制台校验输入是否正确</span></div>
-        <div><b>③ 验签常量</b><span>客户端私有源码里内置的 <code>GUARD_SECRET</code>，用于校验暂停指令签名</span></div>
+        <div><b>① 明文密钥</b><span>私有仓库 <code>PWHbut/zhike</code> → <code>CONSOLE_KEY.txt</code>；本机 <code>/workspace/CONSOLE_KEY.txt</code>；建议再存一份到密码管理器</span></div>
+        <div><b>② 密钥哈希</b><span>本公开仓库 <code>key.json</code> 的 <code>hash</code>，仅供控制台校验输入是否正确，单向不可逆</span></div>
+        <div><b>③ 验签常量</b><span>客户端私有源码里内置的 <code>GUARD_SECRET</code>，值＝①，用来校验控制指令签名</span></div>
+        <div><b>④ 指令签名</b><span><code>guard.json</code> 里的 <code>auth</code>（旧客户端）与 <code>authV2</code>（新客户端），只有摘要，没有密钥</span></div>
       </div>
     </details>
   </div>
@@ -307,10 +406,7 @@
       <label><em>GitHub 细粒度令牌 · 仅需 zk-guard 仓库 Contents 读写</em>
         <input id="i-token" type="password" autocomplete="off" placeholder="github_pat_…">
       </label>
-      <p class="tip">
-        令牌只保存在这台设备的 localStorage，页面本身是静态的，不会上传到任何地方。
-        不填也能用：点「复制 JSON」→「在 GitHub 编辑」→ 粘贴 → 提交，效果一样。
-      </p>
+      <p class="tip">令牌只保存在这台设备的 localStorage，页面本身是静态的，不会上传到任何地方。不填也能用：点「复制 JSON」→「在 GitHub 编辑」→ 粘贴 → 提交。</p>
       <button class="btn ghost" id="b-forget" style="margin-top:12px">清除本机令牌</button>
     </details>
   </div>
@@ -320,10 +416,16 @@
 <script>
 "use strict";
 var REPO = "PWHbut/zk-guard", BRANCH = "main";
-var CONSOLE_VER = "5.6.0";      // 控制台版本；与客户端 v5.6 对齐，页面可见可核对
+var CONSOLE_VER = "5.7.0";      // 控制台版本；与客户端 v5.7 对齐，页面可见可核对
 var FILE = "guard.json", HFile = "hot.json";
-/* 与客户端 app.js 的 cfgSources() 完全一致的 4 个源。并发读取后按
-   rev（guard.json）/ updated（hot.json）取最新，避免某个 CDN 缓存旧值。 */
+/* 真实 versionCode 映射：从各版 APK 的 aapt badging 与 build.gradle 反查得到。 */
+var VERSIONS = [
+  { code: 45, name: "v4.4" }, { code: 46, name: "v4.5" }, { code: 47, name: "v4.6" },
+  { code: 48, name: "v4.7" }, { code: 49, name: "v4.8" }, { code: 50, name: "v4.9" },
+  { code: 51, name: "v5.0" }, { code: 52, name: "v5.1" }, { code: 53, name: "v5.2" },
+  { code: 54, name: "v5.3" }, { code: 55, name: "v5.4" }, { code: 56, name: "v5.5" },
+  { code: 57, name: "v5.6" }, { code: 58, name: "v5.7（当前）" }
+];
 var RAW = function(n){
   return [
     "https://api.github.com/repos/" + REPO + "/contents/" + n + "?ref=" + BRANCH,
@@ -334,20 +436,21 @@ var RAW = function(n){
 };
 var PUSH = function(n){ return "https://api.github.com/repos/" + REPO + "/contents/" + n; };
 
-var state = { enabled: true, reason: "", minBuild: 0, updated: "" };
+var state = { enabled: true, reason: "", minBuild: 0, def: "allow", rules: [], updated: "", rev: 0 };
 var hot = { v: 1, css: "", js: "", flags: {}, note: "", updated: "" };
+var ruleMode = "block";
 
 function $(s){ return document.querySelector(s); }
 function toast(t){
   var el = $("#toast"); el.textContent = t; el.classList.add("on");
-  clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove("on"); }, 2400);
+  clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove("on"); }, 2600);
 }
 function today(){
   var d = new Date(), p = function(n){ return (n<10?"0":"")+n; };
   return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes());
 }
 /* 与 App 内 app.js 完全相同的纯 JS SHA-256：控制台用它对「密钥」做自校验，
-   并对「暂停」指令生成 auth 签名。不依赖 crypto.subtle（可能非安全上下文）。 */
+   并对控制指令生成 auth / authV2 签名。不依赖 crypto.subtle（可能非安全上下文）。 */
 function sha256Hex(str){
   var K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
     0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
@@ -384,13 +487,56 @@ function sha256Hex(str){
   }
   return H.map(function(v){ return v.toString(16).padStart(8,"0"); }).join("");
 }
+
+/* ============ 版本化控制协议：这三段必须与客户端 app.js 逐字等价 ============ */
+function policyCanonical(p){
+  var rules = Array.isArray(p.rules) ? p.rules : [];
+  return JSON.stringify([
+    p.enabled === false ? 0 : 1,
+    Number(p.minBuild) || 0,
+    String(p.default || "allow"),
+    rules.map(function(r){ return [Number(r.minBuild)||0, Number(r.maxBuild)||0, String(r.mode||"block")]; })
+  ]);
+}
+function policyFor(j, build){
+  var b = Number(build) || 0;
+  var rules = Array.isArray(j.rules) ? j.rules : [];
+  for (var i=0; i<rules.length; i++){
+    var r = rules[i] || {};
+    var lo = Number(r.minBuild)||0, hi = Number(r.maxBuild)||0;
+    if (lo && b < lo) continue;
+    if (hi && b > hi) continue;
+    return { mode: String(r.mode||"block"), reason: String(r.reason||""), source: "rule", index: i };
+  }
+  if (j.enabled === false) return { mode: "block", reason: String(j.reason||""), source: "enabled", index: -1 };
+  var def = String(j.default || "allow");
+  if (def === "block" || def === "upgrade")
+    return { mode: def, reason: String(j.reason||""), source: "default", index: -1 };
+  var min = Number(j.minBuild) || 0;
+  if (min && b < min) return { mode: "block", reason: String(j.reason||""), source: "minBuild", index: -1 };
+  return { mode: "allow", reason: "", source: "allow", index: -1 };
+}
 function payload(secret){
   var rev = Math.floor(Date.now()/1000);
-  var p = { enabled: !!state.enabled, minBuild: Number(state.minBuild)||0,
-            reason: state.reason || "", updated: today(), rev: rev };
-  // 暂停（不可用）必须带密钥签名；恢复（可用）不需要，但仍递增 rev 便于客户端判新旧。
-  if (!state.enabled && secret) {
-    p.auth = sha256Hex(secret + ":" + rev + ":" + p.updated + ":off");
+  var p = {
+    enabled: !!state.enabled,
+    minBuild: Number(state.minBuild)||0,
+    reason: state.reason || "",
+    updated: today(),
+    rev: rev,
+    default: String(state.def || "allow"),
+    rules: (state.rules || []).map(function(r){
+      return { minBuild: Number(r.minBuild)||0, maxBuild: Number(r.maxBuild)||0,
+               mode: String(r.mode||"block"), reason: String(r.reason||""),
+               label: String(r.label||"") };
+    }),
+    consoleVer: CONSOLE_VER
+  };
+  // auth：旧公式，旧客户端（v5.6 及更早）在 enabled:false 时验；enabled:true 时被忽略，写上也无害。
+  // authV2：整份策略校验，新客户端（v5.7+）验；没有密钥时不写，客户端回退旧逻辑。
+  if (secret) {
+    p.auth   = sha256Hex(secret + ":" + rev + ":" + p.updated + ":off");
+    p.authV2 = sha256Hex(secret + ":" + rev + ":" + p.updated + ":" + policyCanonical(p));
   }
   return p;
 }
@@ -402,8 +548,7 @@ function hotPayload(){
             note: $("#h-note").value || "", updated: today(),
             minBuild: Number(($("#h-min") || {}).value) || 0,
             maxBuild: Number(($("#h-max") || {}).value) || 0 };
-  // 填了控制台密钥就顺手给补丁签名：公开仓库里被恶改的 hot.json 会因验签失败被客户端忽略
-  var key = ($( "#i-key" ) && $("#i-key").value || "").trim();
+  var key = ($("#i-key") && $("#i-key").value || "").trim();
   if (key) {
     var body = o.css + "|" + o.js + "|" + JSON.stringify(flags);
     o.auth = sha256Hex(key + ":" + v + ":" + sha256Hex(body));
@@ -411,37 +556,103 @@ function hotPayload(){
   return o;
 }
 
+function verName(b){
+  for (var i=0;i<VERSIONS.length;i++) if (VERSIONS[i].code === b) return VERSIONS[i].name;
+  if (b > 58) return "v5.8 及以后（" + b + "）";
+  if (b > 0 && b < 45) return "早期版本（" + b + "）";
+  return "版本码 " + b;
+}
+function rangeText(r){
+  var lo = Number(r.minBuild)||0, hi = Number(r.maxBuild)||0;
+  if (!lo && !hi) return "所有版本";
+  if (!lo) return "≤ " + hi + "（" + verName(hi) + "）";
+  if (!hi) return "≥ " + lo + "（含未来版本）";
+  if (lo === hi) return lo + " · " + verName(lo);
+  return lo + "–" + hi + "（" + verName(lo) + " ~ " + verName(hi) + "）";
+}
+var MODE_TXT = { allow: "放行", block: "停用", upgrade: "提示升级" };
+function renderRules(){
+  var box = $("#rules");
+  if (!state.rules.length){ box.innerHTML = '<div class="empty">暂无版本规则 · 当前只按全局开关与默认策略处理</div>'; return; }
+  box.innerHTML = state.rules.map(function(r, i){
+    return '<div class="rule">'
+      + '<span class="ri">' + (i+1) + '</span>'
+      + '<div class="rb"><b>' + rangeText(r) + '</b><span>' + (r.reason || "无备注") + '</span></div>'
+      + '<span class="chip ' + r.mode + '">' + MODE_TXT[r.mode] + '</span>'
+      + '<div class="ra">'
+      +   '<button class="mini" data-act="up" data-i="' + i + '" title="上移（更优先）">↑</button>'
+      +   '<button class="mini" data-act="down" data-i="' + i + '" title="下移">↓</button>'
+      +   '<button class="mini" data-act="del" data-i="' + i + '" title="删除">✕</button>'
+      + '</div></div>';
+  }).join("");
+}
+function renderImpact(){
+  var p = payload(""), groups = { allow: [], block: [], upgrade: [] };
+  for (var b = 40; b <= 72; b++) groups[policyFor(p, b).mode].push(b);
+  function fmt(arr){
+    if (!arr.length) return "无";
+    var segs = [], s = arr[0], prev = arr[0];
+    for (var i=1;i<arr.length;i++){
+      if (arr[i] !== prev + 1){ segs.push([s,prev]); s = arr[i]; }
+      prev = arr[i];
+    }
+    segs.push([s,prev]);
+    return segs.map(function(g){ return g[0]===g[1] ? (g[0]+" "+verName(g[0])) : (g[0]+"–"+g[1]); }).join("、");
+  }
+  $("#impact").innerHTML = "<b>影响摘要</b>（按版本码 40–72 推算）<br>"
+    + "· 放行：<b>" + fmt(groups.allow) + "</b><br>"
+    + "· 停用：" + fmt(groups.block) + "<br>"
+    + "· 提示升级：" + fmt(groups.upgrade);
+}
 function render(){
   var on = state.enabled;
   $("#dot").className = "dot " + (on ? "on" : "off");
-  $("#st-title").textContent = on ? "所有用户可用" : "所有用户不可用";
-  $("#st-sub").textContent = on ? "App 正常工作" : "App 显示「连接不上服务器」";
-  $("#m-upd").textContent = state.updated || "—";
-  $("#m-min").textContent = state.minBuild ? String(state.minBuild) : "不限";
-  $("#b-on").classList.toggle("on", on);
-  $("#b-off").classList.toggle("on", !on);
-  $("#i-reason").value = state.reason || "";
-  $("#i-min").value = state.minBuild || 0;
-  $("#preview").textContent = JSON.stringify(payload(), null, 2);
+  $("#st-title").textContent = on ? "全局：可用" : "全局：已停用";
+  $("#st-sub").textContent = on ? "按版本规则与默认策略处理" : "所有版本均显示「连接不上服务器」";
+  $("#m-def").textContent = MODE_TXT[state.def] || state.def;
+  $("#m-rules").textContent = state.rules.length + " 条";
+  $("#m-upd").textContent = (state.rev ? state.rev + " · " : "") + (state.updated || "—");
+  // 只在值不同时回写，避免输入过程中光标被重置到末尾
+  var ri = $("#i-reason");
+  if (ri.value !== (state.reason || "")) ri.value = state.reason || "";
+  setSeg("#d-mode", state.def);
+  renderRules();
+  renderImpact();
+  $("#preview").textContent = JSON.stringify(payload(keyValue()), null, 2);
+  simulate();
+}
+function setSeg(sel, val){
+  var bs = document.querySelectorAll(sel + " button");
+  for (var i=0;i<bs.length;i++) bs[i].classList.toggle("on", bs[i].dataset.m === val);
+}
+function keyValue(){ return ($("#i-key").value || "").trim(); }
+function simulate(){
+  var b = Number($("#s-build").value) || 0;
+  var p = payload(""), r = policyFor(p, b);
+  var via = r.source === "rule" ? ("命中规则 #" + (r.index+1))
+    : r.source === "enabled" ? "全局开关 enabled:false"
+    : r.source === "default" ? "默认策略"
+    : r.source === "minBuild" ? "最低可用版本码" : "无规则命中";
+  $("#sim-out").innerHTML = "<b>" + b + " · " + verName(b) + "</b> → "
+    + '<span class="chip ' + r.mode + '">' + MODE_TXT[r.mode] + '</span>'
+    + "　来源：" + via
+    + (r.mode === "allow" ? "　用户端：正常使用"
+      : r.mode === "upgrade" ? "　用户端：显示「此版本已停止支持」并提供下载入口"
+      : "　用户端：显示「连接不上服务器」（伪装断网）");
 }
 function renderHot(){
   $("#h-v").value = hot.v || 1;
   $("#h-css").value = hot.css || "";
   $("#h-js").value = hot.js || "";
-  $("#h-flags").value = JSON.stringify(hot.flags || {}, null, 0);
+  $("#h-flags").value = JSON.stringify(hot.flags || {});
   $("#h-note").value = hot.note || "";
   try { $("#h-preview").textContent = JSON.stringify(hotPayload(), null, 2); }
   catch (e) { $("#h-preview").textContent = "—"; }
 }
 
-/* 4 源并发，全回来后挑「最新」的一份：
-   guard.json 看 rev（数字，越大越新），hot.json 看 updated（字符串）。
-   GitHub API 返回的是 base64 包装，要解一层；其余源直接是 JSON。
-   返回 { data, src } 以便页面显示实际命中的配置源。 */
+/* 4 源并发，全回来后挑「最新」的一份：guard.json 看 rev，其余看 updated。
+   GitHub API 返回 base64 包装，要解一层；单源超时避免被慢源永久拖住。 */
 async function fetchOne(url, name){
-  // 单源超时：raw.githubusercontent.com 在国内常连不上，若不 abort，
-  // readJson 的 Promise.all 会被这一个慢源永久拖住，页面一直停在「读取中…」。
-  // 超时值与客户端 app.js 的 cfgSources 一致（API/CDN 4s，raw 3.5s）。
   var ac = new AbortController();
   var timer = setTimeout(function(){ ac.abort(); }, 3500);
   try {
@@ -457,7 +668,6 @@ async function fetchOne(url, name){
       for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
       j = JSON.parse(new TextDecoder().decode(bytes));
     }
-    // 只接受结构合法的配置文件，别把限流/报错响应当成配置
     if (!j || typeof j !== "object") return null;
     if (name === "guard.json" && typeof j.enabled !== "boolean") return null;
     if (name === "hot.json" && j.v === undefined && j.updated === undefined) return null;
@@ -484,20 +694,24 @@ async function readJson(name){
   if (name === "guard.json") $("#m-src").textContent = best ? bestSrc : "全部不可达";
   return best ? { data: best, src: bestSrc } : null;
 }
-
-/* 读 key.json 的 hash，用于「操作员填的密钥是否正确」的自校验（sha256(密钥) 应等于该 hash）。 */
 async function loadKeyHash(){
   var r = await readJson("key.json");
   var k = r && r.data;
   return (k && k.hash) ? String(k.hash) : "";
 }
-
 async function load(){
   var gr = await readJson(FILE);
   var g = gr && gr.data;
   if (g && typeof g.enabled === "boolean"){
-    state = { enabled: g.enabled, reason: g.reason || "",
-              minBuild: Number(g.minBuild)||0, updated: g.updated || "" };
+    state = {
+      enabled: g.enabled,
+      reason: g.reason || "",
+      minBuild: Number(g.minBuild)||0,
+      def: String(g.default || "allow"),
+      rules: Array.isArray(g.rules) ? g.rules : [],
+      updated: g.updated || "",
+      rev: Number(g.rev)||0
+    };
     render();
   } else {
     $("#st-title").textContent = "读取失败";
@@ -511,22 +725,24 @@ async function load(){
     renderHot();
   }
 }
-
 function b64(str){
   var bytes = new TextEncoder().encode(str), bin = "";
   for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
   return btoa(bin);
 }
-
-function token(){
-  return ($("#i-token").value || "").trim() || localStorage.getItem("zk-gh") || "";
+function token(){ return ($("#i-token").value || "").trim() || localStorage.getItem("zk-gh") || ""; }
+function openDetails(){
+  var d = document.querySelector("details");
+  if (d) d.open = true;
 }
-
 async function push(name, obj, msg, btn, idle){
   var tk = token();
   if (!tk){ toast("先在「写入令牌」里填入，或用「复制 JSON + 在 GitHub 编辑」"); openDetails(); return; }
   localStorage.setItem("zk-gh", tk);
-  btn.disabled = true; btn.textContent = "提交中…";
+  var originalHTML = btn.innerHTML;      // idle 为 null 时表示按钮是复合结构，需整体还原
+  btn.disabled = true;
+  if (idle === null) btn.classList.add("busy");
+  else btn.textContent = "提交中…";
   try {
     var head = { Authorization: "Bearer " + tk, Accept: "application/vnd.github+json" };
     var cur = await fetch(PUSH(name) + "?ref=" + BRANCH, { headers: head });
@@ -547,50 +763,103 @@ async function push(name, obj, msg, btn, idle){
       var e = await put.json().catch(function(){ return {}; });
       throw new Error((e && e.message) || ("写入失败 HTTP " + put.status));
     }
-    // 刷 jsDelivr 缓存（jsDelivr 与 fastly.jsdelivr.net 共用同一份缓存，purge 一次即可）；
-    // GitHub API 源不带缓存，raw 由提交即时生效。
     fetch("https://purge.jsdelivr.net/gh/" + REPO + "@" + BRANCH + "/" + name).catch(function(){});
-    toast("已提交成功，最迟 1 分钟内覆盖全部在线设备");
+    toast("已发布，最迟 1 分钟内覆盖全部在线设备");
     setTimeout(load, 1500);
   } catch (err) {
     toast(err.message || "提交失败");
   } finally {
-    btn.disabled = false; btn.textContent = idle;
+    btn.disabled = false;
+    if (idle === null) { btn.innerHTML = originalHTML; btn.classList.remove("busy"); }
+    else btn.textContent = idle;
   }
 }
 
-function openDetails(){
-  var d = document.querySelector("details");
-  if (d) d.open = true;
+/* 密钥：记住后一键操作；校验用 key.json 的哈希（单向，公开仓库可放）。 */
+async function ensureKey(need){
+  var key = keyValue();
+  if (!key){ toast("请先填入控制台密钥（见上方密钥说明）"); return null; }
+  var kh = await loadKeyHash();
+  if (kh && sha256Hex(key) !== kh){ toast("控制台密钥不正确"); return null; }
+  if (!kh) toast("密钥哈希暂时读不到，将直接签名；请确认密钥无误");
+  if (need && !window.confirm(need)) return null;
+  return key;
+}
+function rememberKey(){
+  if ($("#i-remember").checked && keyValue()) localStorage.setItem("zk-key", keyValue());
+  else localStorage.removeItem("zk-key");
 }
 
-document.querySelector(".seg").addEventListener("click", function(e){
+/* ① 一键控制：点按钮即发布，不再需要「选状态 → 再点提交」。
+   停止 / 恢复都是「全部」语义，因此都清空版本规则，避免规则里的 allow 例外
+   让「停止所有用户」名不副实。 */
+async function quickSwitch(on, btn){
+  var idle = null;                 // 复合结构按钮，push 结束后整体还原 HTML
+  if (!on){
+    var key = await ensureKey("确认停止所有用户使用知课？\n\n所有已安装版本最迟 1 分钟内停用；本机缓存数据不会丢失，之后可一键恢复。");
+    if (!key) return;
+    state.enabled = false; state.def = "block"; state.rules = [];
+    rememberKey(); render();
+    push(FILE, payload(key), "chore(guard): 停止全部用户", btn, idle);
+  } else {
+    state.enabled = true; state.def = "allow"; state.rules = []; state.reason = "";
+    render();
+    push(FILE, payload(""), "chore(guard): 恢复全部用户", btn, idle);
+  }
+}
+$("#b-on").onclick = function(){ quickSwitch(true, this); };
+$("#b-off").onclick = function(){ quickSwitch(false, this); };
+
+/* ② 按版本控制 */
+$("#r-ver").innerHTML = '<option value="all">所有版本（不限区间）</option>'
+  + '<option value="future">未来版本（≥ 59，含以后所有升级）</option>'
+  + '<option value="legacy">早期版本（≤ 48）</option>'
+  + VERSIONS.slice().reverse().map(function(v){
+      return '<option value="' + v.code + '">' + v.name + ' · 版本码 ' + v.code + '</option>';
+    }).join("");
+$("#r-ver").addEventListener("change", function(){
+  var v = this.value;
+  if (v === "all"){ $("#r-min").value = 0; $("#r-max").value = 0; }
+  else if (v === "future"){ $("#r-min").value = 59; $("#r-max").value = 0; }
+  else if (v === "legacy"){ $("#r-min").value = 0; $("#r-max").value = 48; }
+  else { $("#r-min").value = v; $("#r-max").value = v; }
+});
+$("#r-mode").addEventListener("click", function(e){
   var b = e.target.closest("button"); if (!b) return;
-  state.enabled = b.dataset.v === "on";
+  ruleMode = b.dataset.m; setSeg("#r-mode", ruleMode);
+});
+$("#d-mode").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if (!b) return;
+  state.def = b.dataset.m; setSeg("#d-mode", state.def); render();
+});
+$("#r-add").onclick = function(){
+  var lo = Number($("#r-min").value)||0, hi = Number($("#r-max").value)||0;
+  if (hi && lo && hi < lo){ toast("最高版本码不能小于最低版本码"); return; }
+  var obj = { minBuild: lo, maxBuild: hi, mode: ruleMode,
+              reason: ($("#r-note").value || "").trim(), label: "" };
+  state.rules.push(obj);
+  $("#r-note").value = "";
+  render(); toast("已添加规则（发布后才生效）");
+};
+$("#rules").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if (!b) return;
+  var i = Number(b.dataset.i), act = b.dataset.act, n = state.rules.length;
+  if (act === "del") state.rules.splice(i, 1);
+  if (act === "up" && i > 0){ var t = state.rules[i-1]; state.rules[i-1] = state.rules[i]; state.rules[i] = t; }
+  if (act === "down" && i < n-1){ var u = state.rules[i+1]; state.rules[i+1] = state.rules[i]; state.rules[i] = u; }
   render();
 });
-$("#i-reason").addEventListener("input", function(){ state.reason = this.value; render(); });
-$("#i-min").addEventListener("input", function(){ state.minBuild = Number(this.value)||0; render(); });
-
-["h-v","h-css","h-js","h-flags","h-note","h-min","h-max","i-key"].forEach(function(id){
-  $("#" + id).addEventListener("input", renderHot);
-});
-
-$("#b-save").onclick = async function(){
-  if (!state.enabled) {
-    var key = ($("#i-key").value || "").trim();
-    if (!key) { toast("暂停全部用户前请先填入控制台密钥"); return; }
-    var kh = await loadKeyHash();
-    if (kh && sha256Hex(key) !== kh) { toast("控制台密钥不正确"); return; }
-    if (!window.confirm("确认停止所有用户使用知课？\n\n这是全局开关，所有已安装设备最迟 1 分钟内都会停用；\n本机缓存数据不会丢失，之后可随时点「恢复所有用户使用」撤销。")) return;
-    push(FILE, payload(key), "chore(guard): 暂停", this, "提交全局状态");
-  } else {
-    push(FILE, payload(), "chore(guard): 恢复", this, "提交全局状态");
-  }
+$("#s-go").onclick = simulate;
+$("#s-build").addEventListener("input", simulate);
+$("#b-publish").onclick = async function(){
+  var key = await ensureKey("确认发布这份控制策略？\n\n影响摘要已在上方列出，最迟 1 分钟内覆盖在线设备。");
+  if (!key) return;
+  rememberKey();
+  push(FILE, payload(key), "chore(guard): 发布版本控制策略", this, "发布控制策略（需要密钥）");
 };
+$("#b-reset").onclick = function(){ quickSwitch(true, this); };
 $("#b-copy").onclick = function(){
-  if (!state.enabled && !($("#i-key").value || "").trim()) { toast("暂停需先填密钥以生成签名 JSON"); return; }
-  var txt = JSON.stringify(payload(($("#i-key").value || "").trim()), null, 2) + "\n";
+  var txt = JSON.stringify(payload(keyValue()), null, 2) + "\n";
   if (navigator.clipboard) navigator.clipboard.writeText(txt).then(function(){ toast("已复制，去 GitHub 粘贴覆盖"); },
                                                                   function(){ toast("复制失败，请手动选中"); });
   else toast("请手动选中下方内容复制");
@@ -599,6 +868,7 @@ $("#b-open").onclick = function(){
   window.open("https://github.com/" + REPO + "/edit/" + BRANCH + "/" + FILE, "_blank", "noopener");
 };
 
+/* ③ 热更新 */
 $("#h-save").onclick = function(){
   var obj;
   try { obj = hotPayload(); } catch (e) { toast(e.message); return; }
@@ -607,9 +877,16 @@ $("#h-save").onclick = function(){
 $("#h-clear").onclick = function(){
   $("#h-css").value = ""; $("#h-js").value = ""; $("#h-flags").value = "{}"; $("#h-note").value = "";
   $("#h-v").value = (Number($("#h-v").value) || 1) + 1;
-  renderHot();
-  toast("已清空，版本号 +1；点「发布补丁」即可回滚");
+  renderHot(); toast("已清空，版本号 +1；点「发布补丁」即可回滚");
 };
+["h-v","h-css","h-js","h-flags","h-note","h-min","h-max","i-key"].forEach(function(id){
+  $("#" + id).addEventListener("input", function(){
+    renderHot();
+    if (id === "i-key"){ rememberKey(); $("#preview").textContent = JSON.stringify(payload(keyValue()), null, 2); }
+  });
+});
+$("#i-remember").addEventListener("change", rememberKey);
+$("#i-reason").addEventListener("input", function(){ state.reason = this.value; render(); });
 $("#b-forget").onclick = function(){
   localStorage.removeItem("zk-gh"); $("#i-token").value = "";
   toast("已清除本机令牌");
@@ -619,9 +896,11 @@ $("#b-refresh").onclick = function(){
   load().then(function(){ toast("已重新读取 4 个配置源的最新值"); });
 };
 
-// 版本号由常量统一写入，页面与源码不会各写一版
+// 版本号由常量统一写入；记住的密钥只留在这台设备的浏览器里
 $("#ver-badge").textContent = "v" + CONSOLE_VER;
 if (localStorage.getItem("zk-gh")) $("#i-token").value = localStorage.getItem("zk-gh");
+if (localStorage.getItem("zk-key")) $("#i-key").value = localStorage.getItem("zk-key");
+setSeg("#r-mode", ruleMode);
 load();
 </script>
 </body>
