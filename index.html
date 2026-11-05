@@ -424,9 +424,16 @@ function renderHot(){
    GitHub API 返回的是 base64 包装，要解一层；其余源直接是 JSON。
    返回 { data, src } 以便页面显示实际命中的配置源。 */
 async function fetchOne(url, name){
+  // 单源超时：raw.githubusercontent.com 在国内常连不上，若不 abort，
+  // readJson 的 Promise.all 会被这一个慢源永久拖住，页面一直停在「读取中…」。
+  // 超时值与客户端 app.js 的 cfgSources 一致（API/CDN 4s，raw 3.5s）。
+  var ac = new AbortController();
+  var timer = setTimeout(function(){ ac.abort(); }, 3500);
   try {
     var sep = url.indexOf("?") >= 0 ? "&" : "?";
-    var r = await fetch(url + sep + "t=" + Date.now(), { cache: "no-store" });
+    var r = await fetch(url + sep + "t=" + Date.now(),
+                        { cache: "no-store", signal: ac.signal, credentials: "omit" });
+    clearTimeout(timer);
     if (!r.ok) return null;
     var j = await r.json();
     if (j && typeof j === "object" && j.content && j.encoding === "base64") {
@@ -442,6 +449,7 @@ async function fetchOne(url, name){
     if (name === "key.json" && !j.hash) return null;
     return j;
   } catch (e) { return null; }
+  finally { clearTimeout(timer); }
 }
 function cfgNewer(a, b, name){
   if (!b) return true;
