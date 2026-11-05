@@ -1,8 +1,11 @@
 {
-  "v": 1,
+  "v": 2,
   "css": "",
-  "js": "",
+  "js": "/* v2：登录页验证码提示合并为一条。\n   幂等：可重复执行；不改动提示条的显示/隐藏逻辑，只统一文案。\n   兼容 v5.6 / v5.7（两条旧文案都认），未来版本源码自带新文案时不会误改。 */\n(function (w, d) {\n  var TIP = \"请再次点击验证码以更新，若仍未显示，则可能是服务器在23:00至6:00间夜间维护或仅允许校园网访问\";\n  var OLD_FAIL = \"验证码没加载出来，点图片重试；仍不行请连校园网\";\n  var OLD_NIGHT = \"教务系统夜间（23:00–06:00）常处于维护，且仅校园网可访问\";\n  function paint() {\n    try {\n      var t = d.getElementById(\"net-tip-txt\");\n      if (!t) return;\n      var s = t.textContent;\n      if (s !== TIP && (s === OLD_FAIL || s === OLD_NIGHT || !s)) t.textContent = TIP;\n    } catch (e) {}\n  }\n  paint();                                   /* 首帧默认文案、以及已经渲染出来的提示，立即统一 */\n  var el = d.getElementById(\"net-tip-txt\");\n  if (el && w.MutationObserver) {            /* 之后 netTip() 每次重设旧文案时自动纠正 */\n    try { new MutationObserver(paint).observe(el, { childList: true, characterData: true, subtree: true }); }\n    catch (e) {}\n  }\n})(window, document);\n",
   "flags": {},
-  "note": "",
-  "updated": "2026-11-05 00:38"
+  "note": "登录页验证码提示合并为一条：再次点击刷新 + 23:00至6:00夜间维护/校园网说明；同时覆盖夜间单独提示。兼容 v5.6/v5.7。",
+  "updated": "2026-11-06 01:10",
+  "minBuild": 0,
+  "maxBuild": 0,
+  "auth": "ffd62987e6e9ba6f792435aae7c96ce3e3631886cf62c46fd2eb04b978423852"
 }
