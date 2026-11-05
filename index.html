@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>知课 · 控制台 v5.5</title>
+<title>知课 · 控制台 v5.6</title>
 <meta name="description" content="知课客户端的全局状态、界面热更新与密钥签名控制台">
 <style>
   :root{
@@ -120,7 +120,7 @@
   .goal div{background:var(--bg);border-radius:11px;padding:10px 12px;font-size:12px;color:var(--ink-3);line-height:1.6}
   .goal b{display:block;color:var(--ink);font-size:12.5px;margin-bottom:2px}
 
-  /* v5.5：版本条、配置源、文档与密钥入口 */
+  /* v5.6：版本条、配置源、文档与密钥入口 */
   .verbar{
     display:flex;align-items:center;justify-content:space-between;gap:10px;
     margin:-6px 2px 14px;padding:9px 12px;border-radius:11px;
@@ -151,10 +151,10 @@
 <div class="wrap">
   <header>
     <span class="logo"><svg viewBox="0 0 32 32" fill="none"><path d="M9 21V11l7 5 7-5v10" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-    <div><h1>知课 · 控制台 <span class="badge" id="ver-badge">v5.5.0</span></h1><span>全局状态 · 界面热更新 · 密钥签名</span></div>
+    <div><h1>知课 · 控制台 <span class="badge" id="ver-badge">v5.6.0</span></h1><span>全局状态 · 界面热更新 · 密钥签名</span></div>
   </header>
   <div class="verbar">
-    <span>控制台 <b>v5.5.0</b> · 适配客户端 <b>v5.5</b></span>
+    <span>控制台 <b>v5.6.0</b> · 适配客户端 <b>v5.6</b></span>
     <button type="button" id="b-refresh" class="lnk" title="绕过 CDN 缓存重新读取最新配置">强制刷新配置</button>
   </div>
 
@@ -173,16 +173,17 @@
   <div class="card">
     <h2>全局状态</h2>
     <div class="seg">
-      <button id="b-on" data-v="on" class="on">所有用户可用</button>
-      <button id="b-off" data-v="off" class="bad">所有用户不可用</button>
+      <button id="b-on" data-v="on" class="on">恢复所有用户使用</button>
+      <button id="b-off" data-v="off" class="bad">停止所有用户使用</button>
     </div>
     <p class="tip" style="margin:10px 0 0">
-      作用于<b>全部已安装设备</b>：不可用期间 App 只显示「连接不上服务器」，
-      和一次普通的网络故障没有任何区别；恢复后自动回到正常界面，不需要用户做任何事。
+      <b>控制台只用来防止软件被滥用</b>：不做用户管理、不收集任何数据、不影响本机已缓存的内容。
+      两个按钮分别停止 / 恢复<b>全部已安装设备</b>的使用资格；停止期间 App 只显示「连接不上服务器」，
+      和一次普通网络故障没有区别，恢复后自动回到正常界面。最迟 1 分钟覆盖在线设备。
     </p>
     <div class="goal">
-      <div><b>全部可用</b>按钮按下即恢复，最迟 1 分钟生效</div>
-      <div><b>全部不可用</b>按钮按下即暂停，最迟 1 分钟生效；需先填控制台密钥</div>
+      <div><b>恢复所有用户使用</b> · 按下即恢复，无需密钥</div>
+      <div><b>停止所有用户使用</b> · 需填控制台密钥生成签名，提交前会二次确认</div>
     </div>
     <label><em>暂停时给用户看的说明（可选，留空则只显示通用文案）</em>
       <textarea id="i-reason" placeholder="例如：服务维护中，预计今晚恢复。"></textarea>
@@ -238,6 +239,11 @@
       <button class="btn" id="h-save">发布补丁</button>
       <button class="btn ghost" id="h-clear">清空补丁</button>
     </div>
+    <div class="row" style="gap:10px;flex-wrap:wrap;margin:8px 0 0">
+      <label style="flex:1;min-width:150px"><em>最低客户端版本码（0 不限）</em><input id="h-min" type="number" min="0" value="0"></label>
+      <label style="flex:1;min-width:150px"><em>最高客户端版本码（0 不限）</em><input id="h-max" type="number" min="0" value="0"></label>
+    </div>
+    <p class="tip" style="margin:6px 0 0">在上方「控制台密钥」填了密钥时，补丁会自动附带签名；客户端验签不通过会忽略这份补丁。</p>
     <pre id="h-preview">—</pre>
     <p class="tip">
       发布后，用户下次打开 App（或回到前台）时生效。样式补丁会立刻重绘，脚本补丁需要版本号变化。
@@ -270,7 +276,7 @@
       · 读不到配置时一律<b>按可用处理</b>，不会因为断网把所有人挡在外面；<br>
       · 热更新读 <b>hot.json</b>，与状态文件在同一个公开仓库里，源码仓库保持私有；<br>
       · 控制台与客户端都从 <b>4 个源并发读取并取最新</b>，避免某个 CDN 缓存旧值导致「看着像旧版」；<br>
-      · 若页面本身显示的版本号不是 <b>v5.5.0</b>，说明浏览器缓存了旧页面，强制刷新（手机长按刷新 / 电脑 Ctrl+Shift+R）即可。
+      · 若页面本身显示的版本号不是 <b>v5.6.0</b>，说明浏览器缓存了旧页面，强制刷新（手机长按刷新 / 电脑 Ctrl+Shift+R）即可。
     </p>
   </div>
 
@@ -314,7 +320,7 @@
 <script>
 "use strict";
 var REPO = "PWHbut/zk-guard", BRANCH = "main";
-var CONSOLE_VER = "5.5.0";      // 控制台版本；与客户端 v5.5 对齐，页面可见可核对
+var CONSOLE_VER = "5.6.0";      // 控制台版本；与客户端 v5.6 对齐，页面可见可核对
 var FILE = "guard.json", HFile = "hot.json";
 /* 与客户端 app.js 的 cfgSources() 完全一致的 4 个源。并发读取后按
    rev（guard.json）/ updated（hot.json）取最新，避免某个 CDN 缓存旧值。 */
@@ -391,9 +397,18 @@ function payload(secret){
 function hotPayload(){
   var flags = {};
   try { flags = JSON.parse($("#h-flags").value || "{}") || {}; } catch (e) { throw new Error("开关默认值不是合法 JSON"); }
-  return { v: Number($("#h-v").value) || 1, css: $("#h-css").value || "",
-           js: $("#h-js").value || "", flags: flags,
-           note: $("#h-note").value || "", updated: today() };
+  var v = Number($("#h-v").value) || 1;
+  var o = { v: v, css: $("#h-css").value || "", js: $("#h-js").value || "", flags: flags,
+            note: $("#h-note").value || "", updated: today(),
+            minBuild: Number(($("#h-min") || {}).value) || 0,
+            maxBuild: Number(($("#h-max") || {}).value) || 0 };
+  // 填了控制台密钥就顺手给补丁签名：公开仓库里被恶改的 hot.json 会因验签失败被客户端忽略
+  var key = ($( "#i-key" ) && $("#i-key").value || "").trim();
+  if (key) {
+    var body = o.css + "|" + o.js + "|" + JSON.stringify(flags);
+    o.auth = sha256Hex(key + ":" + v + ":" + sha256Hex(body));
+  }
+  return o;
 }
 
 function render(){
@@ -557,7 +572,7 @@ document.querySelector(".seg").addEventListener("click", function(e){
 $("#i-reason").addEventListener("input", function(){ state.reason = this.value; render(); });
 $("#i-min").addEventListener("input", function(){ state.minBuild = Number(this.value)||0; render(); });
 
-["h-v","h-css","h-js","h-flags","h-note"].forEach(function(id){
+["h-v","h-css","h-js","h-flags","h-note","h-min","h-max","i-key"].forEach(function(id){
   $("#" + id).addEventListener("input", renderHot);
 });
 
@@ -567,6 +582,7 @@ $("#b-save").onclick = async function(){
     if (!key) { toast("暂停全部用户前请先填入控制台密钥"); return; }
     var kh = await loadKeyHash();
     if (kh && sha256Hex(key) !== kh) { toast("控制台密钥不正确"); return; }
+    if (!window.confirm("确认停止所有用户使用知课？\n\n这是全局开关，所有已安装设备最迟 1 分钟内都会停用；\n本机缓存数据不会丢失，之后可随时点「恢复所有用户使用」撤销。")) return;
     push(FILE, payload(key), "chore(guard): 暂停", this, "提交全局状态");
   } else {
     push(FILE, payload(), "chore(guard): 恢复", this, "提交全局状态");
