@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>知课 · 控制台 v5.7</title>
+<title>知课 · 控制台 v5.10 · 只要密钥</title>
 <meta name="description" content="知课客户端的全局开关、按版本控制策略、界面热更新与密钥签名控制台">
 <style>
   :root{
@@ -208,10 +208,10 @@
 <div class="wrap">
   <header>
     <span class="logo"><svg viewBox="0 0 32 32" fill="none"><path d="M9 21V11l7 5 7-5v10" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-    <div><h1>知课 · 控制台 <span class="badge" id="ver-badge">v5.7.0</span></h1><span>防止软件被滥用 · 全版本控制 · 密钥签名</span></div>
+    <div><h1>知课 · 控制台 <span class="badge" id="ver-badge">v5.10.0</span></h1><span>防止软件被滥用 · 只要密钥 · 无需令牌</span></div>
   </header>
   <div class="verbar">
-    <span>控制台 <b>v5.7.0</b> · 客户端 <b>v5.7+ 全版本</b></span>
+    <span>控制台 <b>v5.10.0</b> · 客户端 <b>全版本</b> · <b>只需密钥，无需令牌</b></span>
     <button type="button" id="b-refresh" class="lnk" title="绕过 CDN 缓存重新读取最新配置">强制刷新配置</button>
   </div>
 
@@ -235,21 +235,26 @@
       两个按钮按下即发布，不再需要「选完再点提交」。
     </p>
     <div class="bigseg">
-      <button type="button" id="b-on" class="go"><b>恢复所有用户使用</b><small>清空版本规则 · 全部放行 · 无需密钥</small></button>
-      <button type="button" id="b-off" class="stop"><b>停止所有用户使用</b><small>所有版本停用 · 需密钥签名</small></button>
+      <button type="button" id="b-on" class="go"><b>启动所有用户服务</b><small>全部放行 · 需密钥签名</small></button>
+      <button type="button" id="b-off" class="stop"><b>停止所有用户服务</b><small>所有版本停用 · 需密钥签名</small></button>
     </div>
-    <label><em>控制台密钥（停止 / 按版本控制时必填；填一次并勾选记住即可）</em>
+    <label><em>控制台密钥（停止 / 启动 / 按版本控制时均必填；填一次并勾选记住即可）</em>
       <input id="i-key" type="password" autocomplete="off" placeholder="zk-ctrl-…">
     </label>
     <div class="checkline">
       <input type="checkbox" id="i-remember" checked><label for="i-remember" style="margin:0">在这台设备记住密钥</label>
       <a href="https://github.com/PWHbut/zk-guard/blob/main/KEY.md" target="_blank" rel="noopener">密钥是什么 / 放哪 / 怎么用 →</a>
     </div>
+    <div class="checkline">
+      <span id="link-status" class="muted small">发布通道：密钥直连 · 正在初始化…</span>
+      <button type="button" id="b-link" class="btn ghost btn-sm">检查发布通道</button>
+    </div>
     <div class="note">
-      <b>密钥说明</b>：一串 <code>zk-ctrl-</code> 开头的口令，用来给控制指令签名，防止公开仓库被恶改后误停全体用户。
-      明文副本放在<b>私有仓库</b> <code>PWHbut/zhike</code> 的 <code>CONSOLE_KEY.txt</code>（只有仓库所有者可见）与本机
-      <code>/workspace/CONSOLE_KEY.txt</code>；本公开仓库的 <code>key.json</code> 只放 SHA-256 哈希。
-      密钥只在浏览器本地参与计算，不会随请求上传。
+      <b>控制台密钥在哪？</b> 明文在<b>私有仓库</b> <code>PWHbut/zhike</code> 的 <code>CONSOLE_KEY.txt</code>（仅仓库所有者可见）与本机
+      <code>/workspace/CONSOLE_KEY.txt</code>。公开仓库 <code>zk-guard</code> 的 <code>key.json</code> 只放 SHA-256 哈希，<b>不存放明文</b>。<br>
+      <b>怎么用？</b> 用浏览器打开本页（线上控制台、本地文件、App 内嵌均可），把密钥粘进上方输入框，直接点「停止 / 启动」即可。
+      <b>不需要令牌、不需要填地址、不需要后端、不需要手动提交</b>：页面用这把密钥在本机解开受保护的发布凭据，验签后直接把指令发布到 CDN 并刷新缓存。
+      密钥与凭据都不会上传任何服务器；凭据密文即使公开，没有这把密钥也解不开。
     </div>
     <details>
       <summary>可选：停用原因（仅自己记录，不会显示给用户）</summary>
@@ -298,7 +303,7 @@
     <div class="simbox" id="sim">
       <b>规则模拟器</b> · 在下面填一个版本码，立刻看这台客户端会怎样：
       <div class="row" style="margin-top:8px">
-        <input id="s-build" type="number" min="0" step="1" value="58" style="flex:2">
+        <input id="s-build" type="number" min="0" step="1" value="61" style="flex:2">
         <button class="btn ghost" id="s-go" style="flex:1;min-width:90px">模拟</button>
       </div>
       <div id="sim-out" style="margin-top:8px">—</div>
@@ -314,8 +319,8 @@
       <summary>查看将要写入的 guard.json</summary>
       <pre id="preview">—</pre>
       <div class="row">
-        <button class="btn ghost" id="b-copy">复制 JSON</button>
-        <button class="btn ghost" id="b-open">在 GitHub 编辑</button>
+        <button class="btn ghost" id="b-copy">复制配置快照（留档）</button>
+        <button class="btn ghost" id="b-open">在 GitHub 查看</button>
       </div>
     </details>
     <p class="tip">「提示升级」会显示需要更新并提供下载入口，不再伪装成网络故障；其余两种模式保持原有表现。</p>
@@ -373,7 +378,7 @@
       · <b>v5.6 及更早客户端</b>只认全局开关（<code>enabled</code>），仍能被「停止 / 恢复所有用户」控制，但读不懂按版本规则；<br>
       · <b>v5.7 及以后客户端</b>支持按版本码区间精确控制；再往后的新版本由默认策略与开区间规则自动覆盖，控制台无需改动；<br>
       · 控制台与客户端都从 <b>4 个源并发读取并取最新</b>，避免某个 CDN 缓存旧值；<br>
-      · 若页面版本号不是 <b>v5.7.0</b>，说明浏览器缓存了旧页面，强制刷新即可。
+      · 若页面版本号不是 <b>v5.10.0</b>，说明浏览器缓存了旧页面，强制刷新即可。
     </p>
   </div>
 
@@ -401,14 +406,11 @@
   </div>
 
   <div class="card">
-    <details>
-      <summary>写入令牌（只存在本机浏览器）</summary>
-      <label><em>GitHub 细粒度令牌 · 仅需 zk-guard 仓库 Contents 读写</em>
-        <input id="i-token" type="password" autocomplete="off" placeholder="github_pat_…">
-      </label>
-      <p class="tip">令牌只保存在这台设备的 localStorage，页面本身是静态的，不会上传到任何地方。不填也能用：点「复制 JSON」→「在 GitHub 编辑」→ 粘贴 → 提交。</p>
-      <button class="btn ghost" id="b-forget" style="margin-top:12px">清除本机令牌</button>
-    </details>
+    <p class="tip"><b>只要有密钥，就能控制所有客户端：</b>填入密钥后直接点「停止 / 启动」按钮。页面用密钥验签后直接把指令发布到 <code>guard.json</code> 并刷新 CDN，回读校验通过才算成功，客户端最长 1 分钟内进入不可用 / 恢复正常状态。<b>全程无需令牌、无需后端、无需填地址、无需手动提交</b>。</p>
+    <div class="row" style="margin-top:10px">
+      <button type="button" id="b-verify" class="btn ghost">验证控制效果</button>
+      <span id="verify-out" class="muted small">读取线上 guard.json，确认客户端当前是否不可用</span>
+    </div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -416,7 +418,7 @@
 <script>
 "use strict";
 var REPO = "PWHbut/zk-guard", BRANCH = "main";
-var CONSOLE_VER = "5.7.0";      // 控制台版本；与客户端 v5.7 对齐，页面可见可核对
+var CONSOLE_VER = "5.10.0";     // 控制台版本；与客户端 v5.10 对齐，页面可见可核对
 var FILE = "guard.json", HFile = "hot.json";
 /* 真实 versionCode 映射：从各版 APK 的 aapt badging 与 build.gradle 反查得到。 */
 var VERSIONS = [
@@ -424,15 +426,21 @@ var VERSIONS = [
   { code: 48, name: "v4.7" }, { code: 49, name: "v4.8" }, { code: 50, name: "v4.9" },
   { code: 51, name: "v5.0" }, { code: 52, name: "v5.1" }, { code: 53, name: "v5.2" },
   { code: 54, name: "v5.3" }, { code: 55, name: "v5.4" }, { code: 56, name: "v5.5" },
-  { code: 57, name: "v5.6" }, { code: 58, name: "v5.7（当前）" }
+  { code: 57, name: "v5.6" }, { code: 58, name: "v5.7" }, { code: 59, name: "v5.8" },
+  { code: 60, name: "v5.9" }, { code: 61, name: "v5.10（当前）" }
 ];
 var RAW = function(n){
-  return [
-    "https://api.github.com/repos/" + REPO + "/contents/" + n + "?ref=" + BRANCH,
-    "https://cdn.jsdelivr.net/gh/" + REPO + "@" + BRANCH + "/" + n,
-    "https://fastly.jsdelivr.net/gh/" + REPO + "@" + BRANCH + "/" + n,
-    "https://raw.githubusercontent.com/" + REPO + "/" + BRANCH + "/" + n
-  ];
+  var t = Date.now();
+  var out = [];
+  // 同源后端：经 /console 打开时，后端直写的 guard/hot 在此可读到
+  var back = (location.origin || "").replace(/\/$/, "");
+  if (back && back !== "null" && back !== "file://") out.push(back + "/" + n + "?t=" + t);
+  return out.concat([
+    "https://api.github.com/repos/" + REPO + "/contents/" + n + "?ref=" + BRANCH + "&t=" + t,
+    "https://cdn.jsdelivr.net/gh/" + REPO + "@" + BRANCH + "/" + n + "?t=" + t,
+    "https://fastly.jsdelivr.net/gh/" + REPO + "@" + BRANCH + "/" + n + "?t=" + t,
+    "https://raw.githubusercontent.com/" + REPO + "/" + BRANCH + "/" + n + "?t=" + t
+  ]);
 };
 var PUSH = function(n){ return "https://api.github.com/repos/" + REPO + "/contents/" + n; };
 
@@ -558,7 +566,7 @@ function hotPayload(){
 
 function verName(b){
   for (var i=0;i<VERSIONS.length;i++) if (VERSIONS[i].code === b) return VERSIONS[i].name;
-  if (b > 58) return "v5.8 及以后（" + b + "）";
+  if (b > 61) return "v5.10 及以后（" + b + "）";
   if (b > 0 && b < 45) return "早期版本（" + b + "）";
   return "版本码 " + b;
 }
@@ -626,6 +634,64 @@ function setSeg(sel, val){
   for (var i=0;i<bs.length;i++) bs[i].classList.toggle("on", bs[i].dataset.m === val);
 }
 function keyValue(){ return ($("#i-key").value || "").trim(); }
+
+/* ============ 发布通道（v5.10）：只要密钥，无需令牌 / 后端 / 手动提交 ============
+   控制台是纯静态页（GitHub Pages、本地文件、App 内嵌都能打开），不依赖任何服务端。
+   发布凭据以 AES-256-GCM 密文放在公开仓库 cred.json，派生密钥 = SHA-256(控制台密钥|salt)。
+   操作员填入密钥后，页面在本机用 WebCrypto 解开凭据，直接跨域调用 GitHub API
+   写入 guard.json / hot.json，刷新 CDN 并回读校验。凭据与密钥都不离开浏览器。 */
+var CRED_URLS = [
+  "./cred.json", "/cred.json", "/static/cred.json",
+  "https://pwhbut.github.io/zk-guard/cred.json",
+  "https://cdn.jsdelivr.net/gh/" + REPO + "@" + BRANCH + "/cred.json",
+  "https://raw.githubusercontent.com/" + REPO + "/" + BRANCH + "/cred.json"
+];
+var CRED = null;
+function setChannel(txt, ok){
+  var s = $("#link-status"); if (!s) return;
+  s.textContent = "发布通道：" + txt;
+  s.style.color = ok ? "var(--ok, #12945f)" : "var(--bad, #d64a3f)";
+}
+async function loadCred(){
+  if (CRED) return CRED;
+  var rs = await Promise.all(CRED_URLS.map(function(u){
+    var sep = u.indexOf("?") >= 0 ? "&" : "?";
+    return fetch(u + sep + "t=" + Date.now(), { cache: "no-store", credentials: "omit" })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .catch(function(){ return null; });
+  }));
+  for (var i = 0; i < rs.length; i++){
+    var c = rs[i];
+    if (c && c.v === 1 && c.s && c.i && c.c) { CRED = c; return CRED; }
+  }
+  throw new Error("受保护的发布凭据不可达（检查网络后重试）");
+}
+function b64d(s){
+  var bin = atob(String(s || "").replace(/\s/g, "")), u = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return u;
+}
+function b64toText(s){
+  var u = b64d(s);
+  return new TextDecoder().decode(u);
+}
+async function unlockCred(secret){
+  var c = await loadCred();
+  var kb = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(secret + "|" + c.s));
+  var k  = await crypto.subtle.importKey("raw", kb, { name: "AES-GCM" }, false, ["decrypt"]);
+  try {
+    var plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64d(c.i) }, k, b64d(c.c));
+    return new TextDecoder().decode(plain).trim();
+  } catch (e) {
+    throw new Error("控制台密钥不正确");
+  }
+}
+async function initChannel(){
+  try { await loadCred(); setChannel("密钥直连 CDN · 已就绪（无需令牌、无需后端）", true); return true; }
+  catch (e) { setChannel(e.message, false); return false; }
+}
+/* 兼容旧调用名 */
+function setLink(txt, ok){ setChannel(String(txt).replace(/^控制通道：/, ""), ok); }
 function simulate(){
   var b = Number($("#s-build").value) || 0;
   var p = payload(""), r = policyFor(p, b);
@@ -685,11 +751,13 @@ async function readJson(name){
   var urls = RAW(name);
   var rs = await Promise.all(urls.map(function(u){ return fetchOne(u, name); }));
   var best = null, bestSrc = "—";
-  var labels = ["GitHub API", "jsDelivr", "Fastly CDN", "raw"];
+  // RAW() 可能含 4（无同源）或 5（含同源）个源，标签按数量动态对齐
+  var all = ["同源后端", "GitHub API", "jsDelivr", "Fastly CDN", "raw"];
+  var labels = urls.length === all.length ? all : all.slice(1);
   for (var i = 0; i < rs.length; i++){
     var j = rs[i];
     if (!j) continue;
-    if (cfgNewer(j, best, name)) { best = j; bestSrc = labels[i]; }
+    if (cfgNewer(j, best, name)) { best = j; bestSrc = labels[i] || "源" + (i + 1); }
   }
   if (name === "guard.json") $("#m-src").textContent = best ? bestSrc : "全部不可达";
   return best ? { data: best, src: bestSrc } : null;
@@ -715,7 +783,7 @@ async function load(){
     render();
   } else {
     $("#st-title").textContent = "读取失败";
-    $("#st-sub").textContent = "检查网络后刷新；仍失败可直接去 GitHub 编辑";
+    $("#st-sub").textContent = "检查网络后点右上角「强制刷新配置」重试";
   }
   var hr = await readJson(HFile);
   var h = hr && hr.data;
@@ -730,30 +798,33 @@ function b64(str){
   for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
   return btoa(bin);
 }
-function token(){ return ($("#i-token").value || "").trim() || localStorage.getItem("zk-gh") || ""; }
 function openDetails(){
   var d = document.querySelector("details");
   if (d) d.open = true;
 }
 async function push(name, obj, msg, btn, idle){
-  var tk = token();
-  if (!tk){ toast("先在「写入令牌」里填入，或用「复制 JSON + 在 GitHub 编辑」"); openDetails(); return; }
-  localStorage.setItem("zk-gh", tk);
   var originalHTML = btn.innerHTML;      // idle 为 null 时表示按钮是复合结构，需整体还原
   btn.disabled = true;
   if (idle === null) btn.classList.add("busy");
-  else btn.textContent = "提交中…";
+  else btn.textContent = "发布中…";
   try {
+    // ① 只用控制台密钥：本机解开受保护的发布凭据，令牌从不出现在界面上
+    var key = keyValue();
+    if (!key) { toast("请先填入控制台密钥"); return; }
+    var tk = await unlockCred(key);      // 密钥不对会明确报错，不会静默失败
     var head = { Authorization: "Bearer " + tk, Accept: "application/vnd.github+json" };
-    var cur = await fetch(PUSH(name) + "?ref=" + BRANCH, { headers: head });
-    if (cur.status === 401 || cur.status === 403) throw new Error("令牌无效或权限不足");
-    if (!cur.ok) throw new Error("读取失败 HTTP " + cur.status);
+
+    // ② 读当前文件 sha
+    var cur = await fetch(PUSH(name) + "?ref=" + BRANCH + "&t=" + Date.now(),
+                          { headers: head, cache: "no-store" });
+    if (cur.status === 401 || cur.status === 403) throw new Error("发布凭据已失效，请联系管理员更新");
+    if (!cur.ok) throw new Error("读取线上配置失败 HTTP " + cur.status);
     var info = await cur.json();
-    var body = {
-      message: msg + " " + today(),
-      content: b64(JSON.stringify(obj, null, 2) + "\n"),
-      sha: info.sha, branch: BRANCH
-    };
+
+    // ③ 真实写入
+    var body = { message: msg + " " + today(),
+                 content: b64(JSON.stringify(obj, null, 2) + "\n"),
+                 branch: BRANCH, sha: info.sha };
     var put = await fetch(PUSH(name), {
       method: "PUT",
       headers: Object.assign({ "Content-Type": "application/json" }, head),
@@ -763,11 +834,30 @@ async function push(name, obj, msg, btn, idle){
       var e = await put.json().catch(function(){ return {}; });
       throw new Error((e && e.message) || ("写入失败 HTTP " + put.status));
     }
-    fetch("https://purge.jsdelivr.net/gh/" + REPO + "@" + BRANCH + "/" + name).catch(function(){});
-    toast("已发布，最迟 1 分钟内覆盖全部在线设备");
-    setTimeout(load, 1500);
+
+    // ④ 刷新 CDN（允许失败，不影响权威写入）
+    try { await fetch("https://purge.jsdelivr.net/gh/" + REPO + "@" + BRANCH + "/" + name,
+                      { mode: "no-cors", cache: "no-store" }); } catch (e) {}
+
+    // ⑤ 权威回读校验：rev / v 与本次发布一致才算成功，绝不「假成功」
+    var back = await fetch(PUSH(name) + "?ref=" + BRANCH + "&t=" + Date.now(),
+                           { headers: head, cache: "no-store" });
+    var bj = await back.json().catch(function(){ return {}; });
+    var got = null;
+    try { got = JSON.parse(b64toText(bj.content)); } catch (e) {}
+    var want = (name === "hot.json") ? Number(obj.v) : Number(obj.rev);
+    var have = got ? ((name === "hot.json") ? Number(got.v) : Number(got.rev)) : NaN;
+    if (!got || have !== want) throw new Error("写入后回读校验未通过，指令可能未生效，请重试");
+
+    setChannel("密钥直连 CDN · 已发布 " + (name === "hot.json" ? "v" + obj.v : "rev " + obj.rev), true);
+    toast(name === "hot.json" ? "已发布热更新，最迟 1 分钟内生效"
+                              : "已发布 rev " + obj.rev + "，最迟 1 分钟内覆盖全部在线设备");
+    setTimeout(load, 1200);
   } catch (err) {
-    toast(err.message || "提交失败");
+    var m = (err && err.message) ? err.message : "网络错误";
+    // 明确失败：绝不假装成功，也不退回任何手动提交流程
+    toast("发布失败：" + m + " — 指令未生效");
+    setChannel("发布失败（" + m + "）", false);
   } finally {
     btn.disabled = false;
     if (idle === null) { btn.innerHTML = originalHTML; btn.classList.remove("busy"); }
@@ -802,9 +892,11 @@ async function quickSwitch(on, btn){
     rememberKey(); render();
     push(FILE, payload(key), "chore(guard): 停止全部用户", btn, idle);
   } else {
+    var key = await ensureKey("确认启动所有用户服务？\n\n所有已安装版本最迟 1 分钟内恢复正常使用。");
+    if (!key) return;
     state.enabled = true; state.def = "allow"; state.rules = []; state.reason = "";
-    render();
-    push(FILE, payload(""), "chore(guard): 恢复全部用户", btn, idle);
+    rememberKey(); render();
+    push(FILE, payload(key), "chore(guard): 启动全部用户", btn, idle);
   }
 }
 $("#b-on").onclick = function(){ quickSwitch(true, this); };
@@ -812,7 +904,7 @@ $("#b-off").onclick = function(){ quickSwitch(false, this); };
 
 /* ② 按版本控制 */
 $("#r-ver").innerHTML = '<option value="all">所有版本（不限区间）</option>'
-  + '<option value="future">未来版本（≥ 59，含以后所有升级）</option>'
+  + '<option value="future">未来版本（≥ 61，含以后所有升级）</option>'
   + '<option value="legacy">早期版本（≤ 48）</option>'
   + VERSIONS.slice().reverse().map(function(v){
       return '<option value="' + v.code + '">' + v.name + ' · 版本码 ' + v.code + '</option>';
@@ -820,7 +912,7 @@ $("#r-ver").innerHTML = '<option value="all">所有版本（不限区间）</opt
 $("#r-ver").addEventListener("change", function(){
   var v = this.value;
   if (v === "all"){ $("#r-min").value = 0; $("#r-max").value = 0; }
-  else if (v === "future"){ $("#r-min").value = 59; $("#r-max").value = 0; }
+  else if (v === "future"){ $("#r-min").value = 61; $("#r-max").value = 0; }
   else if (v === "legacy"){ $("#r-min").value = 0; $("#r-max").value = 48; }
   else { $("#r-min").value = v; $("#r-max").value = v; }
 });
@@ -859,13 +951,14 @@ $("#b-publish").onclick = async function(){
 };
 $("#b-reset").onclick = function(){ quickSwitch(true, this); };
 $("#b-copy").onclick = function(){
+  // 只读：复制当前配置快照供自己留档；发布一律走「密钥直连」，不需要手动粘贴覆盖
   var txt = JSON.stringify(payload(keyValue()), null, 2) + "\n";
-  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(function(){ toast("已复制，去 GitHub 粘贴覆盖"); },
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(function(){ toast("已复制当前配置快照（仅留档）"); },
                                                                   function(){ toast("复制失败，请手动选中"); });
   else toast("请手动选中下方内容复制");
 };
 $("#b-open").onclick = function(){
-  window.open("https://github.com/" + REPO + "/edit/" + BRANCH + "/" + FILE, "_blank", "noopener");
+  window.open("https://github.com/" + REPO + "/blob/" + BRANCH + "/" + FILE, "_blank", "noopener");
 };
 
 /* ③ 热更新 */
@@ -887,20 +980,39 @@ $("#h-clear").onclick = function(){
 });
 $("#i-remember").addEventListener("change", rememberKey);
 $("#i-reason").addEventListener("input", function(){ state.reason = this.value; render(); });
-$("#b-forget").onclick = function(){
-  localStorage.removeItem("zk-gh"); $("#i-token").value = "";
-  toast("已清除本机令牌");
-};
 $("#b-refresh").onclick = function(){
   $("#m-src").textContent = "读取中…";
-  load().then(function(){ toast("已重新读取 4 个配置源的最新值"); });
+  load().then(function(){ toast("已重新读取线上配置源的最新值"); });
+};
+$("#b-link").onclick = function(){ initChannel().then(function(ok){ toast(ok ? "发布通道已就绪：填密钥点按钮即可" : "发布通道不可用，请检查网络"); }); };
+
+/* 验证控制效果：从线上四个源读回 guard.json，用与客户端一致的策略函数
+   判断 v5.10（build 61）会不会被拦截，直接告诉操作员客户端是否处于不可用状态。 */
+$("#b-verify").onclick = async function(){
+  var out = $("#verify-out");
+  out.textContent = "正在读取线上 guard.json…";
+  var r = await readJson(FILE);
+  var g = r && r.data;
+  if (!g || typeof g.enabled !== "boolean"){
+    out.textContent = "读取失败：线上配置暂不可达（" + ((r && r.src) || "全部源") + "）";
+    toast("读取失败，请稍后重试"); return;
+  }
+  var p = policyFor(g, 61);
+  var blocked = p.mode !== "allow";
+  var via = p.source === "enabled" ? "全局开关 enabled:false"
+    : p.source === "default" ? "默认策略 " + (g.default || "block")
+    : p.source === "rule" ? "版本规则 #" + (p.index + 1)
+    : p.source === "minBuild" ? "最低版本码" : "放行";
+  out.textContent = "线上 rev " + (g.rev || "?") + " · 来源 " + ((r && r.src) || "—")
+    + " · v5.10 客户端：" + (blocked ? "不可用（" + (MODE_TXT[p.mode] || p.mode) + "，" + via + "）" : "可正常使用（放行）");
+  toast(blocked ? "已确认：客户端处于不可用状态" : "当前为放行状态，客户端可正常使用");
 };
 
 // 版本号由常量统一写入；记住的密钥只留在这台设备的浏览器里
 $("#ver-badge").textContent = "v" + CONSOLE_VER;
-if (localStorage.getItem("zk-gh")) $("#i-token").value = localStorage.getItem("zk-gh");
 if (localStorage.getItem("zk-key")) $("#i-key").value = localStorage.getItem("zk-key");
 setSeg("#r-mode", ruleMode);
+initChannel();        // 检查受保护凭据是否可读，操作员零配置
 load();
 </script>
 </body>
