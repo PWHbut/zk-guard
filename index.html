@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>知课 · 控制台 v5.10 · 只要密钥</title>
+<title>知课 · 控制台 v5.12 · 只要密钥</title>
 <meta name="description" content="知课客户端的全局开关、按版本控制策略、界面热更新与密钥签名控制台">
 <style>
   :root{
@@ -208,10 +208,10 @@
 <div class="wrap">
   <header>
     <span class="logo"><svg viewBox="0 0 32 32" fill="none"><path d="M9 21V11l7 5 7-5v10" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-    <div><h1>知课 · 控制台 <span class="badge" id="ver-badge">v5.10.0</span></h1><span>防止软件被滥用 · 只要密钥 · 无需令牌</span></div>
+    <div><h1>知课 · 控制台 <span class="badge" id="ver-badge">v5.12.0</span></h1><span>防止软件被滥用 · 只要密钥 · 无需令牌</span></div>
   </header>
   <div class="verbar">
-    <span>控制台 <b>v5.10.0</b> · 客户端 <b>全版本</b> · <b>只需密钥，无需令牌</b></span>
+    <span>控制台 <b>v5.12.0</b> · 客户端 <b>全版本</b> · <b>只需密钥，无需令牌</b></span>
     <button type="button" id="b-refresh" class="lnk" title="绕过 CDN 缓存重新读取最新配置">强制刷新配置</button>
   </div>
 
@@ -238,7 +238,7 @@
       <button type="button" id="b-on" class="go"><b>启动所有用户服务</b><small>全部放行 · 需密钥签名</small></button>
       <button type="button" id="b-off" class="stop"><b>停止所有用户服务</b><small>所有版本停用 · 需密钥签名</small></button>
     </div>
-    <label><em>控制台密钥（停止 / 启动 / 按版本控制时均必填；填一次并勾选记住即可）</em>
+    <label><em>控制台密钥（停止 / 启动 / 最低版本限制 / 按版本控制时均必填；填一次并勾选记住即可）</em>
       <input id="i-key" type="password" autocomplete="off" placeholder="zk-ctrl-…">
     </label>
     <div class="checkline">
@@ -264,7 +264,27 @@
   </div>
 
   <div class="card">
-    <h2><span class="num">2</span>按版本控制（客户端再怎么升级都管得住）</h2>
+    <h2><span class="num">2</span>最低版本限制（低于此版本必须更新，且无法取消）</h2>
+    <p class="tip" style="margin:0">
+      从下面选择<strong>最低可用版本</strong>：低于它的客户端会弹出<b>无法关闭</b>的提示「请更新至最新版本，否则无法继续使用」，
+      必须升级后才能用；它及之后的所有版本照常可用。下拉里列出了<b>全部历史版本</b>，选「不限制」即可恢复所有版本可用。
+    </p>
+    <div class="row">
+      <label style="margin:0;flex:2;min-width:220px"><em>最低可用版本（全部版本一览）</em>
+        <select id="mv-ver"></select>
+      </label>
+      <button type="button" class="btn" id="mv-apply" style="flex:1;min-width:140px">应用并发布</button>
+    </div>
+    <p class="tip" id="mv-now">当前生效：读取中…</p>
+    <p class="tip">
+      点「应用并发布」会一次生成完整策略：低版本强制更新、当前及未来版本放行、未命中规则的兜底停用，
+      并把 <code>minBuild</code> 写成所选版本码作为双保险。<b>v5.6 及更早</b>客户端读不懂按版本规则，
+      启用限制后会被整体停用（同样无法使用）；<b>v5.12 起</b>的弹窗不可取消并直达下载页。
+    </p>
+  </div>
+
+  <div class="card">
+    <h2><span class="num">3</span>按版本控制（客户端再怎么升级都管得住）</h2>
     <p class="tip" style="margin:0">
       规则按<b>版本码区间</b>匹配，数组里靠前的优先；没命中任何规则就走<b>默认策略</b>。
       把默认策略设成「停用」，再给当前版本加一条「放行」，之后发布的任何新版本都会自动落入停用——
@@ -284,7 +304,7 @@
       <div class="seg" id="r-mode">
         <button type="button" data-m="allow">放行</button>
         <button type="button" data-m="block" class="bad on">停用</button>
-        <button type="button" data-m="upgrade" class="warn">提示升级</button>
+        <button type="button" data-m="upgrade" class="warn">强制更新</button>
       </div>
     </label>
     <label><em>备注（自己看的，例如「v5.6 有缺陷」）</em><input id="r-note" placeholder="可留空"></label>
@@ -296,14 +316,14 @@
       <div class="seg" id="d-mode">
         <button type="button" data-m="allow" class="on">全部放行</button>
         <button type="button" data-m="block" class="bad">全部停用</button>
-        <button type="button" data-m="upgrade" class="warn">提示升级</button>
+        <button type="button" data-m="upgrade" class="warn">强制更新</button>
       </div>
     </label>
 
     <div class="simbox" id="sim">
       <b>规则模拟器</b> · 在下面填一个版本码，立刻看这台客户端会怎样：
       <div class="row" style="margin-top:8px">
-        <input id="s-build" type="number" min="0" step="1" value="61" style="flex:2">
+        <input id="s-build" type="number" min="0" step="1" value="63" style="flex:2">
         <button class="btn ghost" id="s-go" style="flex:1;min-width:90px">模拟</button>
       </div>
       <div id="sim-out" style="margin-top:8px">—</div>
@@ -323,11 +343,11 @@
         <button class="btn ghost" id="b-open">在 GitHub 查看</button>
       </div>
     </details>
-    <p class="tip">「提示升级」会显示需要更新并提供下载入口，不再伪装成网络故障；其余两种模式保持原有表现。</p>
+    <p class="tip">「强制更新」会弹出<b>无法取消</b>的更新提示，必须升级后才能使用，并提供下载入口；其余两种模式保持原有表现。</p>
   </div>
 
   <div class="card">
-    <h2><span class="num">3</span>界面热更新</h2>
+    <h2><span class="num">4</span>界面热更新</h2>
     <p class="tip" style="margin:0 0 4px">
       不改包、不发版，直接给已安装的设备换外观或加小功能。客户端启动时先套用上次拿到的补丁，再在后台拉新的。
     </p>
@@ -365,7 +385,7 @@
       <span>请检查网络后重试。如果网络正常，可能是服务正在维护，稍后再试。</span>
       <u>重试</u>
     </div>
-    <p class="tip">默认「停用」只有这一段：没有「已暂停」「权限受限」之类的字样，不出现版本号，也不显示原因。只有显式选择「提示升级」才会显示更新提示。</p>
+    <p class="tip">默认「停用」只有这一段：没有「已暂停」「权限受限」之类的字样，不出现版本号，也不显示原因。只有显式选择「强制更新」或触发最低版本限制，才会显示无法关闭的更新提示。</p>
   </div>
 
   <div class="card">
@@ -378,7 +398,7 @@
       · <b>v5.6 及更早客户端</b>只认全局开关（<code>enabled</code>），仍能被「停止 / 恢复所有用户」控制，但读不懂按版本规则；<br>
       · <b>v5.7 及以后客户端</b>支持按版本码区间精确控制；再往后的新版本由默认策略与开区间规则自动覆盖，控制台无需改动；<br>
       · 控制台与客户端都从 <b>4 个源并发读取并取最新</b>，避免某个 CDN 缓存旧值；<br>
-      · 若页面版本号不是 <b>v5.10.0</b>，说明浏览器缓存了旧页面，强制刷新即可。
+      · 若页面版本号不是 <b>v5.12.0</b>，说明浏览器缓存了旧页面，强制刷新即可。
     </p>
   </div>
 
@@ -418,7 +438,7 @@
 <script>
 "use strict";
 var REPO = "PWHbut/zk-guard", BRANCH = "main";
-var CONSOLE_VER = "5.10.0";     // 控制台版本；与客户端 v5.10 对齐，页面可见可核对
+var CONSOLE_VER = "5.12.0";     // 控制台版本；与客户端 v5.12 对齐，页面可见可核对
 var FILE = "guard.json", HFile = "hot.json";
 /* 真实 versionCode 映射：从各版 APK 的 aapt badging 与 build.gradle 反查得到。 */
 var VERSIONS = [
@@ -427,7 +447,8 @@ var VERSIONS = [
   { code: 51, name: "v5.0" }, { code: 52, name: "v5.1" }, { code: 53, name: "v5.2" },
   { code: 54, name: "v5.3" }, { code: 55, name: "v5.4" }, { code: 56, name: "v5.5" },
   { code: 57, name: "v5.6" }, { code: 58, name: "v5.7" }, { code: 59, name: "v5.8" },
-  { code: 60, name: "v5.9" }, { code: 61, name: "v5.10（当前）" }
+  { code: 60, name: "v5.9" }, { code: 61, name: "v5.10" },
+  { code: 62, name: "v5.11" }, { code: 63, name: "v5.12（当前）" }
 ];
 var RAW = function(n){
   var t = Date.now();
@@ -521,7 +542,8 @@ function policyFor(j, build){
   if (def === "block" || def === "upgrade")
     return { mode: def, reason: String(j.reason||""), source: "default", index: -1 };
   var min = Number(j.minBuild) || 0;
-  if (min && b < min) return { mode: "block", reason: String(j.reason||""), source: "minBuild", index: -1 };
+  // v5.12：低于「最低可用版本」时返回强制更新（与客户端 guardPolicyFor 逐字等价）
+  if (min && b < min) return { mode: "upgrade", reason: String(j.reason||""), source: "minBuild", index: -1 };
   return { mode: "allow", reason: "", source: "allow", index: -1 };
 }
 function payload(secret){
@@ -566,7 +588,7 @@ function hotPayload(){
 
 function verName(b){
   for (var i=0;i<VERSIONS.length;i++) if (VERSIONS[i].code === b) return VERSIONS[i].name;
-  if (b > 61) return "v5.10 及以后（" + b + "）";
+  if (b > 63) return "v5.12 及以后（" + b + "）";
   if (b > 0 && b < 45) return "早期版本（" + b + "）";
   return "版本码 " + b;
 }
@@ -578,7 +600,7 @@ function rangeText(r){
   if (lo === hi) return lo + " · " + verName(lo);
   return lo + "–" + hi + "（" + verName(lo) + " ~ " + verName(hi) + "）";
 }
-var MODE_TXT = { allow: "放行", block: "停用", upgrade: "提示升级" };
+var MODE_TXT = { allow: "放行", block: "停用", upgrade: "强制更新" };
 function renderRules(){
   var box = $("#rules");
   if (!state.rules.length){ box.innerHTML = '<div class="empty">暂无版本规则 · 当前只按全局开关与默认策略处理</div>'; return; }
@@ -610,16 +632,22 @@ function renderImpact(){
   $("#impact").innerHTML = "<b>影响摘要</b>（按版本码 40–72 推算）<br>"
     + "· 放行：<b>" + fmt(groups.allow) + "</b><br>"
     + "· 停用：" + fmt(groups.block) + "<br>"
-    + "· 提示升级：" + fmt(groups.upgrade);
+    + "· 强制更新：" + fmt(groups.upgrade);
 }
 function render(){
   var on = state.enabled;
+  var limiting = Number(state.minBuild)||0;
   $("#dot").className = "dot " + (on ? "on" : "off");
-  $("#st-title").textContent = on ? "全局：可用" : "全局：已停用";
-  $("#st-sub").textContent = on ? "按版本规则与默认策略处理" : "所有版本均显示「连接不上服务器」";
+  $("#st-title").textContent = on ? "全局：可用" : (limiting ? "按最低版本限制运行" : "全局：已停用");
+  $("#st-sub").textContent = on ? "按版本规则与默认策略处理"
+    : (limiting ? "低于 " + verName(limiting) + " 强制更新，其余正常可用" : "所有版本均显示「连接不上服务器」");
   $("#m-def").textContent = MODE_TXT[state.def] || state.def;
   $("#m-rules").textContent = state.rules.length + " 条";
   $("#m-upd").textContent = (state.rev ? state.rev + " · " : "") + (state.updated || "—");
+  var mv = $("#mv-now");
+  if (mv) mv.innerHTML = limiting
+    ? "当前生效：最低可用 <b>" + verName(limiting) + "</b>（版本码 " + limiting + "），低于它的客户端强制更新且无法取消"
+    : "当前生效：<b>不限制</b>，所有版本均可正常使用";
   // 只在值不同时回写，避免输入过程中光标被重置到末尾
   var ri = $("#i-reason");
   if (ri.value !== (state.reason || "")) ri.value = state.reason || "";
@@ -635,7 +663,7 @@ function setSeg(sel, val){
 }
 function keyValue(){ return ($("#i-key").value || "").trim(); }
 
-/* ============ 发布通道（v5.10）：只要密钥，无需令牌 / 后端 / 手动提交 ============
+/* ============ 发布通道（v5.12）：只要密钥，无需令牌 / 后端 / 手动提交 ============
    控制台是纯静态页（GitHub Pages、本地文件、App 内嵌都能打开），不依赖任何服务端。
    发布凭据以 AES-256-GCM 密文放在公开仓库 cred.json，派生密钥 = SHA-256(控制台密钥|salt)。
    操作员填入密钥后，页面在本机用 WebCrypto 解开凭据，直接跨域调用 GitHub API
@@ -703,7 +731,7 @@ function simulate(){
     + '<span class="chip ' + r.mode + '">' + MODE_TXT[r.mode] + '</span>'
     + "　来源：" + via
     + (r.mode === "allow" ? "　用户端：正常使用"
-      : r.mode === "upgrade" ? "　用户端：显示「此版本已停止支持」并提供下载入口"
+      : r.mode === "upgrade" ? "　用户端：弹出无法取消的强制更新提示，必须升级后才能使用"
       : "　用户端：显示「连接不上服务器」（伪装断网）");
 }
 function renderHot(){
@@ -781,6 +809,7 @@ async function load(){
       rev: Number(g.rev)||0
     };
     render();
+    try { $("#mv-ver").value = String(state.minBuild || 0); } catch (e) {}
   } else {
     $("#st-title").textContent = "读取失败";
     $("#st-sub").textContent = "检查网络后点右上角「强制刷新配置」重试";
@@ -888,13 +917,13 @@ async function quickSwitch(on, btn){
   if (!on){
     var key = await ensureKey("确认停止所有用户使用知课？\n\n所有已安装版本最迟 1 分钟内停用；本机缓存数据不会丢失，之后可一键恢复。");
     if (!key) return;
-    state.enabled = false; state.def = "block"; state.rules = [];
+    state.enabled = false; state.def = "block"; state.rules = []; state.minBuild = 0;
     rememberKey(); render();
     push(FILE, payload(key), "chore(guard): 停止全部用户", btn, idle);
   } else {
     var key = await ensureKey("确认启动所有用户服务？\n\n所有已安装版本最迟 1 分钟内恢复正常使用。");
     if (!key) return;
-    state.enabled = true; state.def = "allow"; state.rules = []; state.reason = "";
+    state.enabled = true; state.def = "allow"; state.rules = []; state.reason = ""; state.minBuild = 0;
     rememberKey(); render();
     push(FILE, payload(key), "chore(guard): 启动全部用户", btn, idle);
   }
@@ -902,9 +931,46 @@ async function quickSwitch(on, btn){
 $("#b-on").onclick = function(){ quickSwitch(true, this); };
 $("#b-off").onclick = function(){ quickSwitch(false, this); };
 
-/* ② 按版本控制 */
+/* ② 最低版本限制：列出全部历史版本，选一个「最低可用版本」即生成完整策略并发布。
+   0 = 不限制 → 全部恢复；>0 → 低版本强制更新、当前及未来放行、兜底停用。
+   enabled:false 用来覆盖读不懂版本规则的 v5.6 及更早客户端；v5.7+ 由 rules 精确放行。 */
+$("#mv-ver").innerHTML = '<option value="0">不限制（所有版本均可正常使用）</option>'
+  + VERSIONS.map(function(v){
+      return '<option value="' + v.code + '">' + v.name + ' · 版本码 ' + v.code + '</option>';
+    }).join("");
+$("#mv-apply").onclick = async function(){
+  var code = Number($("#mv-ver").value)||0;
+  var need = code
+    ? "确认把最低可用版本设为 " + verName(code) + "（版本码 " + code + "）？\n\n"
+      + "低于它的客户端会弹出无法取消的更新提示，必须升级后才能使用；"
+      + "该版本及之后的所有版本正常可用。\n\n本机缓存数据不会丢失。"
+    : "确认取消最低版本限制，恢复所有版本可用？";
+  var key = await ensureKey(need);
+  if (!key) return;
+  if (!code){
+    state.enabled = true; state.def = "allow"; state.rules = [];
+    state.minBuild = 0; state.reason = "";
+  } else {
+    state.enabled = false;      // 覆盖读不懂版本规则的 v5.6 及更早客户端
+    state.def = "block";        // 未命中任何规则的兜底
+    state.minBuild = code;      // 双保险：客户端 minBuild 分支也会强制更新
+    state.reason = "";
+    state.rules = [
+      { minBuild: 0, maxBuild: code-1, mode: "upgrade", reason: "",
+        label: "低于最低版本 → 强制更新（无法取消）" },
+      { minBuild: code, maxBuild: 0, mode: "allow", reason: "",
+        label: "最低版本及以上 → 放行" }
+    ];
+  }
+  rememberKey(); render();
+  push(FILE, payload(key),
+       "chore(guard): " + (code ? "设置最低可用版本 " + verName(code) : "取消最低版本限制"),
+       this, "应用并发布");
+};
+
+/* ③ 按版本控制 */
 $("#r-ver").innerHTML = '<option value="all">所有版本（不限区间）</option>'
-  + '<option value="future">未来版本（≥ 61，含以后所有升级）</option>'
+  + '<option value="future">未来版本（≥ ' + VERSIONS[VERSIONS.length-1].code + '，含以后所有升级）</option>'
   + '<option value="legacy">早期版本（≤ 48）</option>'
   + VERSIONS.slice().reverse().map(function(v){
       return '<option value="' + v.code + '">' + v.name + ' · 版本码 ' + v.code + '</option>';
@@ -912,7 +978,7 @@ $("#r-ver").innerHTML = '<option value="all">所有版本（不限区间）</opt
 $("#r-ver").addEventListener("change", function(){
   var v = this.value;
   if (v === "all"){ $("#r-min").value = 0; $("#r-max").value = 0; }
-  else if (v === "future"){ $("#r-min").value = 61; $("#r-max").value = 0; }
+  else if (v === "future"){ $("#r-min").value = VERSIONS[VERSIONS.length-1].code; $("#r-max").value = 0; }
   else if (v === "legacy"){ $("#r-min").value = 0; $("#r-max").value = 48; }
   else { $("#r-min").value = v; $("#r-max").value = v; }
 });
@@ -961,7 +1027,7 @@ $("#b-open").onclick = function(){
   window.open("https://github.com/" + REPO + "/blob/" + BRANCH + "/" + FILE, "_blank", "noopener");
 };
 
-/* ③ 热更新 */
+/* ④ 热更新 */
 $("#h-save").onclick = function(){
   var obj;
   try { obj = hotPayload(); } catch (e) { toast(e.message); return; }
@@ -987,7 +1053,7 @@ $("#b-refresh").onclick = function(){
 $("#b-link").onclick = function(){ initChannel().then(function(ok){ toast(ok ? "发布通道已就绪：填密钥点按钮即可" : "发布通道不可用，请检查网络"); }); };
 
 /* 验证控制效果：从线上四个源读回 guard.json，用与客户端一致的策略函数
-   判断 v5.10（build 61）会不会被拦截，直接告诉操作员客户端是否处于不可用状态。 */
+   按控制台内置的最新版本码判断当前客户端会不会被拦截，直接告诉操作员结果。 */
 $("#b-verify").onclick = async function(){
   var out = $("#verify-out");
   out.textContent = "正在读取线上 guard.json…";
@@ -997,14 +1063,16 @@ $("#b-verify").onclick = async function(){
     out.textContent = "读取失败：线上配置暂不可达（" + ((r && r.src) || "全部源") + "）";
     toast("读取失败，请稍后重试"); return;
   }
-  var p = policyFor(g, 61);
+  var curCode = VERSIONS[VERSIONS.length-1].code;
+  var curName = verName(curCode).replace("（当前）", "");
+  var p = policyFor(g, curCode);
   var blocked = p.mode !== "allow";
   var via = p.source === "enabled" ? "全局开关 enabled:false"
     : p.source === "default" ? "默认策略 " + (g.default || "block")
     : p.source === "rule" ? "版本规则 #" + (p.index + 1)
     : p.source === "minBuild" ? "最低版本码" : "放行";
   out.textContent = "线上 rev " + (g.rev || "?") + " · 来源 " + ((r && r.src) || "—")
-    + " · v5.10 客户端：" + (blocked ? "不可用（" + (MODE_TXT[p.mode] || p.mode) + "，" + via + "）" : "可正常使用（放行）");
+    + " · " + curName + " 客户端：" + (blocked ? "不可用（" + (MODE_TXT[p.mode] || p.mode) + "，" + via + "）" : "可正常使用（放行）");
   toast(blocked ? "已确认：客户端处于不可用状态" : "当前为放行状态，客户端可正常使用");
 };
 
