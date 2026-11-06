@@ -1,12 +1,12 @@
 {
-  "enabled": false,
+  "enabled": true,
   "minBuild": 0,
   "reason": "",
   "updated": "2026-11-06 17:31",
-  "rev": 1793957489,
-  "default": "block",
+  "rev": 1793957502,
+  "default": "allow",
   "rules": [],
   "consoleVer": "5.9.0",
-  "auth": "dbe09a9f76c55dac3d0d61776421e83fafb5c218a9d93ece24cd6a1c53651854",
-  "authV2": "4f63b43409bc6907edc663bb0c0233082c516e57feab6b791794cf61168f8c02"
+  "auth": "ad156b21b6b47b147a40462c2218978447bced28204034896a2839aea68a65c2",
+  "authV2": "572f99455edaf28e4bab267e6ef472f5292809441bdb8e8c7507070016febb93"
 }
