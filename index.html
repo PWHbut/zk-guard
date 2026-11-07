@@ -323,7 +323,7 @@
     <div class="simbox" id="sim">
       <b>规则模拟器</b> · 在下面填一个版本码，立刻看这台客户端会怎样：
       <div class="row" style="margin-top:8px">
-        <input id="s-build" type="number" min="0" step="1" value="67" style="flex:2">
+        <input id="s-build" type="number" min="0" step="1" value="68" style="flex:2">
         <button class="btn ghost" id="s-go" style="flex:1;min-width:90px">模拟</button>
       </div>
       <div id="sim-out" style="margin-top:8px">—</div>
@@ -438,7 +438,7 @@
 <script>
 "use strict";
 var REPO = "PWHbut/zk-guard", BRANCH = "main";
-var CONSOLE_VER = "5.16.0";     // 控制台版本；与客户端 v5.16 对齐，页面可见可核对
+var CONSOLE_VER = "5.17.0";     // 控制台版本；与客户端 v5.16 对齐，页面可见可核对
 var FILE = "guard.json", HFile = "hot.json";
 /* 真实 versionCode 映射：从各版 APK 的 aapt badging 与 build.gradle 反查得到。 */
 var VERSIONS = [
@@ -449,7 +449,7 @@ var VERSIONS = [
   { code: 57, name: "v5.6" }, { code: 58, name: "v5.7" }, { code: 59, name: "v5.8" },
   { code: 60, name: "v5.9" }, { code: 61, name: "v5.10" },
   { code: 62, name: "v5.11" }, { code: 63, name: "v5.12" },
-  { code: 64, name: "v5.13" }, { code: 65, name: "v5.14" }, { code: 66, name: "v5.15" }, { code: 67, name: "v5.16（当前）" }
+  { code: 64, name: "v5.13" }, { code: 65, name: "v5.14" }, { code: 66, name: "v5.15" }, { code: 67, name: "v5.16" }, { code: 68, name: "v5.17（当前）" }
 ];
 var RAW = function(n){
   var t = Date.now();
@@ -548,7 +548,9 @@ function policyFor(j, build){
   return { mode: "allow", reason: "", source: "allow", index: -1 };
 }
 function payload(secret){
-  var rev = Math.floor(Date.now()/1000);
+  /* rev 必须严格递增。原来直接用秒级时间戳，同一秒内连点两次（典型：先「限制」再「取消」）
+     会发出两个相同的 rev，客户端按「不比缓存新」处理，取消指令就永远进不了缓存。 */
+  var rev = Math.max(Math.floor(Date.now()/1000), (Number(state.rev) || 0) + 1);
   var p = {
     enabled: !!state.enabled,
     minBuild: Number(state.minBuild)||0,
@@ -569,6 +571,7 @@ function payload(secret){
     p.auth   = sha256Hex(secret + ":" + rev + ":" + p.updated + ":off");
     p.authV2 = sha256Hex(secret + ":" + rev + ":" + p.updated + ":" + policyCanonical(p));
   }
+  state.rev = rev;                 // 记住本次 rev，连点两次也保证后一次更大
   return p;
 }
 function hotPayload(){
@@ -589,7 +592,7 @@ function hotPayload(){
 
 function verName(b){
   for (var i=0;i<VERSIONS.length;i++) if (VERSIONS[i].code === b) return VERSIONS[i].name;
-  if (b > 67) return "v5.16 及以后（" + b + "）";
+  if (b > 68) return "v5.17 及以后（" + b + "）";
   if (b > 0 && b < 45) return "早期版本（" + b + "）";
   return "版本码 " + b;
 }
@@ -832,6 +835,38 @@ function openDetails(){
   var d = document.querySelector("details");
   if (d) d.open = true;
 }
+/* 发布后自检：并行回读客户端真正会走的几条线路，看谁已经能读到这份配置。
+   jsDelivr 的分支缓存长达 12 小时、purge 接口还会限流，光靠它就会出现
+   「控制台点了取消、用户还在弹更新」；GitHub Pages（10 分钟）和 raw 才是可靠的确认路径。 */
+async function probeOnce(name, want){
+  var t = Date.now();
+  var list = [
+    ["Pages", "https://pwhbut.github.io/zk-guard/" + name + "?t=" + t],
+    ["raw", "https://raw.githubusercontent.com/" + REPO + "/" + BRANCH + "/" + name + "?t=" + t],
+    ["jsDelivr", "https://cdn.jsdelivr.net/gh/" + REPO + "@" + BRANCH + "/" + name + "?t=" + t]
+  ];
+  return Promise.all(list.map(async function(it){
+    try {
+      var ac = new AbortController();
+      var tm = setTimeout(function(){ ac.abort(); }, 4000);
+      var r = await fetch(it[1], { cache: "no-store", signal: ac.signal });
+      clearTimeout(tm);
+      if (!r.ok) return { name: it[0], hit: false };
+      var j = await r.json();
+      var v = name === "hot.json" ? Number(j.v) : Number(j.rev);
+      return { name: it[0], hit: v === want };
+    } catch (e) { return { name: it[0], hit: false }; }
+  }));
+}
+/* 提交后 raw 通常 2~5 秒才刷出来，单轮探测会误报 0/3；补一轮 3 秒后的复测。 */
+async function probeSources(name, want){
+  var first = await probeOnce(name, want);
+  if (first.every(function(x){ return x.hit; })) return first;
+  await new Promise(function(r){ setTimeout(r, 3000); });
+  var second = await probeOnce(name, want);
+  return first.map(function(x, i){ return (x.hit || !second[i].hit) ? x : second[i]; });
+}
+
 async function push(name, obj, msg, btn, idle){
   var originalHTML = btn.innerHTML;      // idle 为 null 时表示按钮是复合结构，需整体还原
   btn.disabled = true;
@@ -879,9 +914,16 @@ async function push(name, obj, msg, btn, idle){
     var have = got ? ((name === "hot.json") ? Number(got.v) : Number(got.rev)) : NaN;
     if (!got || have !== want) throw new Error("写入后回读校验未通过，指令可能未生效，请重试");
 
-    setChannel("密钥直连 CDN · 已发布 " + (name === "hot.json" ? "v" + obj.v : "rev " + obj.rev), true);
-    toast(name === "hot.json" ? "已发布热更新，最迟 1 分钟内生效"
-                              : "已发布 rev " + obj.rev + "，最迟 1 分钟内覆盖全部在线设备");
+    // ⑥ 节点同步自检：确认已有线路能读到这份新配置，并把滞后节点明确说出来
+    var sync = await probeSources(name, want);
+    var lag = sync.filter(function(x){ return !x.hit; }).map(function(x){ return x.name; });
+    var okN = sync.length - lag.length;
+    setChannel("密钥直连 CDN · 已发布 " + (name === "hot.json" ? "v" + obj.v : "rev " + obj.rev)
+               + " · 节点 " + okN + "/" + sync.length + " 已同步", true);
+    toast(name === "hot.json"
+      ? "已发布热更新 · 节点 " + okN + "/" + sync.length + " 已同步"
+      : "已发布 rev " + obj.rev + " · 节点 " + okN + "/" + sync.length + " 已同步"
+        + (lag.length ? "（" + lag.join("、") + " 稍后跟上）" : "，客户端 1 分钟内生效"));
     setTimeout(load, 1200);
   } catch (err) {
     var m = (err && err.message) ? err.message : "网络错误";
