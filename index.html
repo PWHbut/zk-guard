@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>知课 · 控制台 v5.18 · 只要密钥</title>
+<title>知课 · 控制台 v5.20 · 只要密钥</title>
 <meta name="description" content="知课客户端的全局开关、按版本控制策略、界面热更新与密钥签名控制台">
 <style>
   :root{
@@ -208,10 +208,10 @@
 <div class="wrap">
   <header>
     <span class="logo"><svg viewBox="0 0 32 32" fill="none"><path d="M9 21V11l7 5 7-5v10" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-    <div><h1>知课 · 控制台 <span class="badge" id="ver-badge">v5.18.0</span></h1><span>防止软件被滥用 · 只要密钥 · 无需令牌</span></div>
+    <div><h1>知课 · 控制台 <span class="badge" id="ver-badge">v5.20.0</span></h1><span>防止软件被滥用 · 只要密钥 · 无需令牌</span></div>
   </header>
   <div class="verbar">
-    <span>控制台 <b id="ver-foot">v5.18.0</b> · 客户端 <b>全版本</b> · <b>只需密钥，无需令牌</b></span>
+    <span>控制台 <b id="ver-foot">v5.20.0</b> · 客户端 <b>全版本</b> · <b>只需密钥，无需令牌</b></span>
     <button type="button" id="b-refresh" class="lnk" title="绕过 CDN 缓存重新读取最新配置">强制刷新配置</button>
   </div>
 
@@ -398,7 +398,7 @@
       · <b>v5.6 及更早客户端</b>只认全局开关（<code>enabled</code>），仍能被「停止 / 恢复所有用户」控制，但读不懂按版本规则；<br>
       · <b>v5.7 及以后客户端</b>支持按版本码区间精确控制；再往后的新版本由默认策略与开区间规则自动覆盖，控制台无需改动；<br>
       · 控制台与客户端都从 <b>4 个源并发读取并取最新</b>，避免某个 CDN 缓存旧值；<br>
-      · 若页面版本号不是 <b id="ver-note">v5.18.0</b>，说明浏览器缓存了旧页面，强制刷新即可。
+      · 若页面版本号不是 <b id="ver-note">v5.20.0</b>，说明浏览器缓存了旧页面，强制刷新即可。
     </p>
   </div>
 
@@ -438,7 +438,7 @@
 <script>
 "use strict";
 var REPO = "PWHbut/zk-guard", BRANCH = "main";
-var CONSOLE_VER = "5.18.0";     // 控制台版本（唯一来源：标题/页头/页脚/核对提示全部由它写入）
+var CONSOLE_VER = "5.20.0";     // 控制台版本（唯一来源：标题/页头/页脚/核对提示全部由它写入）
 var FILE = "guard.json", HFile = "hot.json";
 /* 真实 versionCode 映射：从各版 APK 的 aapt badging 与 build.gradle 反查得到。 */
 var VERSIONS = [
@@ -449,7 +449,7 @@ var VERSIONS = [
   { code: 57, name: "v5.6" }, { code: 58, name: "v5.7" }, { code: 59, name: "v5.8" },
   { code: 60, name: "v5.9" }, { code: 61, name: "v5.10" },
   { code: 62, name: "v5.11" }, { code: 63, name: "v5.12" },
-  { code: 64, name: "v5.13" }, { code: 65, name: "v5.14" }, { code: 66, name: "v5.15" }, { code: 67, name: "v5.16" }, { code: 68, name: "v5.17" }, { code: 69, name: "v5.18（当前）" }
+  { code: 64, name: "v5.13" }, { code: 65, name: "v5.14" }, { code: 66, name: "v5.15" }, { code: 67, name: "v5.16" }, { code: 68, name: "v5.17" }, { code: 69, name: "v5.18" }, { code: 70, name: "v5.19" }, { code: 71, name: "v5.20（当前）" }
 ];
 var RAW = function(n){
   var t = Date.now();
@@ -595,7 +595,7 @@ function hotPayload(){
 
 function verName(b){
   for (var i=0;i<VERSIONS.length;i++) if (VERSIONS[i].code === b) return VERSIONS[i].name;
-  if (b > 69) return "v5.18 及以后（" + b + "）";
+  if (b > 71) return "v5.20 及以后（" + b + "）";
   if (b > 0 && b < 45) return "早期版本（" + b + "）";
   return "版本码 " + b;
 }
