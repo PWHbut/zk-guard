@@ -3,10 +3,10 @@
   "minBuild": 0,
   "reason": "",
   "updated": "2026-11-07 18:11",
-  "rev": 1794046263,
+  "rev": 1794046324,
   "default": "block",
   "rules": [],
   "consoleVer": "5.17.0",
-  "auth": "729f8a2ac3e1d72bc62548572c02747b92024c3c194f4fa6a9f76a7a247f0b17",
-  "authV2": "dff4882f91e290366545dcfd28a0eb66da98816e0f778997bb238325227825d5"
+  "auth": "3a8894975052e2ad78c7cf38952adbf511b22841c2f9601b0097f8d3a0a082e7",
+  "authV2": "559f6d4931191bd47cb38c833302388e74dca024698429db25107c45a1e121f8"
 }
