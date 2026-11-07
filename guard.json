@@ -1,12 +1,12 @@
 {
   "enabled": true,
   "minBuild": 0,
-  "reason": "",
-  "updated": "2026-11-07 12:08",
-  "rev": 1794024538,
+  "reason": "v5.15 控制台实测（等价全放行，不影响用户）",
+  "updated": "2026-11-07 16:02",
+  "rev": 1794038544,
   "default": "allow",
   "rules": [],
-  "consoleVer": "5.13.0",
-  "auth": "9c23e86e4d5a7150ca7112a56ffd080577f0e66a35b4efd606aed02b59e4b923",
-  "authV2": "449a593a400f351f37fb7c569159fa139178d66e2fc0054f73234a798c16ff63"
+  "consoleVer": "5.15.0",
+  "auth": "b6c379457ce1dcf34d16ab058bec048a8ba7f2295cfc370419974aa640f28d89",
+  "authV2": "cc57aa54c17dd9ef9fdf0a68fab98fac3dd41f6cb74294f86786395c132f1917"
 }
