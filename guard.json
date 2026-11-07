@@ -1,27 +1,12 @@
 {
-  "enabled": false,
-  "minBuild": 69,
+  "enabled": true,
+  "minBuild": 0,
   "reason": "",
   "updated": "2026-11-07 18:46",
-  "rev": 1794048374,
-  "default": "block",
-  "rules": [
-    {
-      "minBuild": 0,
-      "maxBuild": 68,
-      "mode": "upgrade",
-      "reason": "",
-      "label": "低于最低版本 → 强制更新（无法取消）"
-    },
-    {
-      "minBuild": 69,
-      "maxBuild": 0,
-      "mode": "allow",
-      "reason": "",
-      "label": "最低版本及以上 → 放行"
-    }
-  ],
+  "rev": 1794048410,
+  "default": "allow",
+  "rules": [],
   "consoleVer": "5.18.0",
-  "auth": "b0f8d5cf8a99748a64d396f8724349336095e87e5a537b49c3e01b5a7bf976be",
-  "authV2": "2eac3e6ef703b89c2fe80d1638fc4b8c30f73aade1a1d2e7c10bdd23893c57c9"
+  "auth": "19777d6502b698ac91dda5e2f53f535caad1ca6033ed5578654e41c367fe2a37",
+  "authV2": "4c126078bff23f7255b40673795cfd3cbebf9df7fe4a97b1b33c18773fbb0509"
 }
