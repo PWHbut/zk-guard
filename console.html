@@ -355,12 +355,17 @@
       <div><b>样式补丁</b>间距、配色、字号、显隐</div>
       <div><b>脚本补丁</b>纯前端的小功能，可操作 DOM</div>
       <div><b>开关默认值</b>决定实验室功能的初始状态</div>
-      <div><b>版本号</b>递增才会重新应用一次脚本</div>
+      <div><b>文案替换</b>selector→文本，热改界面措辞</div>
+      <div><b>通用配置</b>window.__zkCfg，任意模块可读</div>
+      <div><b>导航布局</b>排序/隐藏/重命名/下线模块</div>
     </div>
     <label><em>补丁版本号（整数，每次发布 +1）</em><input id="h-v" type="number" min="1" step="1" value="1"></label>
     <label><em>样式补丁（CSS，可为空）</em><textarea id="h-css" class="code" placeholder=".kpi.accent{background:linear-gradient(150deg,#1e63d6,#4d90f5)}"></textarea></label>
     <label><em>脚本补丁（JS，可为空；同一版本号只执行一次）</em><textarea id="h-js" class="code" placeholder="/* 例：在概览顶部插一条公告 */"></textarea></label>
     <label><em>开关默认值（JSON，例如 {"examcd": false}）</em><textarea id="h-flags" class="code" placeholder="{}">{}</textarea></label>
+    <label><em>文案替换（JSON：{"选择器":"新文本"}）</em><textarea id="h-text" class="code" placeholder='{"#crumb":"当前位置"}'></textarea></label>
+    <label><em>通用配置（JSON：合并进 window.__zkCfg）</em><textarea id="h-cfg" class="code" placeholder='{"examcd":false,"kpiCount":4}'>{}</textarea></label>
+    <label><em>导航布局（JSON：order/hide/rename/disabled）</em><textarea id="h-nav" class="code" placeholder='{"hide":["cet"],"rename":{"kb":"课表V2"}}'></textarea></label>
     <label><em>说明（仅供自己记录）</em><input id="h-note" placeholder="例如：修正成绩页间距"></label>
     <div class="row" style="gap:10px">
       <label style="flex:1;min-width:150px;margin:0"><em>最低客户端版本码（0 不限）</em><input id="h-min" type="number" min="0" value="0"></label>
@@ -369,8 +374,10 @@
     <div class="row">
       <button class="btn" id="h-save">发布补丁</button>
       <button class="btn ghost" id="h-clear">清空补丁</button>
+      <button class="btn ghost" id="h-copy">复制热更新 JSON</button>
     </div>
-    <p class="tip">填了密钥时补丁会自动附带签名，客户端验签不通过会忽略这份补丁。想回滚：清空三个内容框、版本号 +1 再发布。</p>
+    <p class="tip">填了密钥时补丁会自动附带签名，客户端验签不通过会忽略这份补丁。想回滚：清空内容框、版本号 +1 再发布。
+      签名按「css|js|flags|cfg|text|nav」整体计算，客户端用同一公式校验——所以新增字段不会影响旧客户端（它们只验前三项）。</p>
     <details><summary>查看补丁 JSON</summary><pre id="h-preview">—</pre></details>
   </div>
 
@@ -580,14 +587,21 @@ function payload(secret){
 function hotPayload(){
   var flags = {};
   try { flags = JSON.parse($("#h-flags").value || "{}") || {}; } catch (e) { throw new Error("开关默认值不是合法 JSON"); }
+  var text = {}, cfg = {}, nav = {};
+  try { text = JSON.parse($("#h-text").value || "{}") || {}; } catch (e) { throw new Error("文案替换不是合法 JSON"); }
+  try { cfg = JSON.parse($("#h-cfg").value || "{}") || {}; } catch (e) { throw new Error("通用配置不是合法 JSON"); }
+  try { nav = JSON.parse($("#h-nav").value || "{}") || {}; } catch (e) { throw new Error("导航布局不是合法 JSON"); }
   var v = Number($("#h-v").value) || 1;
   var o = { v: v, css: $("#h-css").value || "", js: $("#h-js").value || "", flags: flags,
+            text: text, cfg: cfg, nav: nav,
             note: $("#h-note").value || "", updated: today(),
             minBuild: Number(($("#h-min") || {}).value) || 0,
             maxBuild: Number(($("#h-max") || {}).value) || 0 };
   var key = ($("#i-key") && $("#i-key").value || "").trim();
   if (key) {
-    var body = o.css + "|" + o.js + "|" + JSON.stringify(flags);
+    // 签名覆盖全部内容字段；客户端用同一公式校验，旧客户端只验前三项仍兼容
+    var body = o.css + "|" + o.js + "|" + JSON.stringify(flags) + "|" +
+               JSON.stringify(cfg) + "|" + JSON.stringify(text) + "|" + JSON.stringify(nav);
     o.auth = sha256Hex(key + ":" + v + ":" + sha256Hex(body));
   }
   return o;
@@ -753,6 +767,9 @@ function renderHot(){
   $("#h-css").value = hot.css || "";
   $("#h-js").value = hot.js || "";
   $("#h-flags").value = JSON.stringify(hot.flags || {});
+  $("#h-text").value = JSON.stringify(hot.text || {});
+  $("#h-cfg").value = JSON.stringify(hot.cfg || {});
+  $("#h-nav").value = JSON.stringify(hot.nav || {});
   $("#h-note").value = hot.note || "";
   try { $("#h-preview").textContent = JSON.stringify(hotPayload(), null, 2); }
   catch (e) { $("#h-preview").textContent = "—"; }
@@ -1132,11 +1149,21 @@ $("#h-save").onclick = function(){
   push(HFile, obj, "feat(hot): v" + obj.v, this, "发布补丁");
 };
 $("#h-clear").onclick = function(){
-  $("#h-css").value = ""; $("#h-js").value = ""; $("#h-flags").value = "{}"; $("#h-note").value = "";
+  $("#h-css").value = ""; $("#h-js").value = ""; $("#h-flags").value = "{}";
+  $("#h-text").value = "{}"; $("#h-cfg").value = "{}"; $("#h-nav").value = "{}";
+  $("#h-note").value = "";
   $("#h-v").value = (Number($("#h-v").value) || 1) + 1;
   renderHot(); toast("已清空，版本号 +1；点「发布补丁」即可回滚");
 };
-["h-v","h-css","h-js","h-flags","h-note","h-min","h-max","i-key"].forEach(function(id){
+$("#h-copy").onclick = function(){
+  var txt;
+  try { txt = JSON.stringify(hotPayload(), null, 2); }
+  catch (e) { toast(e.message); return; }
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(function(){ toast("已复制热更新 JSON"); },
+                                                              function(){ toast("复制失败，请手动选中"); });
+  else toast("请手动选中下方 JSON 复制");
+};
+["h-v","h-css","h-js","h-flags","h-text","h-cfg","h-nav","h-note","h-min","h-max","i-key"].forEach(function(id){
   $("#" + id).addEventListener("input", function(){
     renderHot();
     if (id === "i-key"){ rememberKey(); $("#preview").textContent = JSON.stringify(payload(keyValue()), null, 2); }
