@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>知课 · 控制台 v5.20 · 只要密钥</title>
+<title>知课 · 控制台 v5.21 · 只要密钥</title>
 <meta name="description" content="知课客户端的全局开关、按版本控制策略、界面热更新与密钥签名控制台">
 <style>
   :root{
@@ -208,10 +208,10 @@
 <div class="wrap">
   <header>
     <span class="logo"><svg viewBox="0 0 32 32" fill="none"><path d="M9 21V11l7 5 7-5v10" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-    <div><h1>知课 · 控制台 <span class="badge" id="ver-badge">v5.20.0</span></h1><span>防止软件被滥用 · 只要密钥 · 无需令牌</span></div>
+    <div><h1>知课 · 控制台 <span class="badge" id="ver-badge">v5.21.0</span></h1><span>防止软件被滥用 · 只要密钥 · 无需令牌</span></div>
   </header>
   <div class="verbar">
-    <span>控制台 <b id="ver-foot">v5.20.0</b> · 客户端 <b>全版本</b> · <b>只需密钥，无需令牌</b></span>
+    <span>控制台 <b id="ver-foot">v5.21.0</b> · 客户端 <b>全版本</b> · <b>只需密钥，无需令牌</b></span>
     <button type="button" id="b-refresh" class="lnk" title="绕过 CDN 缓存重新读取最新配置">强制刷新配置</button>
   </div>
 
@@ -405,7 +405,7 @@
       · <b>v5.6 及更早客户端</b>只认全局开关（<code>enabled</code>），仍能被「停止 / 恢复所有用户」控制，但读不懂按版本规则；<br>
       · <b>v5.7 及以后客户端</b>支持按版本码区间精确控制；再往后的新版本由默认策略与开区间规则自动覆盖，控制台无需改动；<br>
       · 控制台与客户端都从 <b>4 个源并发读取并取最新</b>，避免某个 CDN 缓存旧值；<br>
-      · 若页面版本号不是 <b id="ver-note">v5.20.0</b>，说明浏览器缓存了旧页面，强制刷新即可。
+      · 若页面版本号不是 <b id="ver-note">v5.21.0</b>，说明浏览器缓存了旧页面，强制刷新即可。
     </p>
   </div>
 
@@ -445,7 +445,7 @@
 <script>
 "use strict";
 var REPO = "PWHbut/zk-guard", BRANCH = "main";
-var CONSOLE_VER = "5.20.0";     // 控制台版本（唯一来源：标题/页头/页脚/核对提示全部由它写入）
+var CONSOLE_VER = "5.21.0";     // 控制台版本（唯一来源：标题/页头/页脚/核对提示全部由它写入）
 var FILE = "guard.json", HFile = "hot.json";
 /* 真实 versionCode 映射：从各版 APK 的 aapt badging 与 build.gradle 反查得到。 */
 var VERSIONS = [
@@ -456,7 +456,7 @@ var VERSIONS = [
   { code: 57, name: "v5.6" }, { code: 58, name: "v5.7" }, { code: 59, name: "v5.8" },
   { code: 60, name: "v5.9" }, { code: 61, name: "v5.10" },
   { code: 62, name: "v5.11" }, { code: 63, name: "v5.12" },
-  { code: 64, name: "v5.13" }, { code: 65, name: "v5.14" }, { code: 66, name: "v5.15" }, { code: 67, name: "v5.16" }, { code: 68, name: "v5.17" }, { code: 69, name: "v5.18" }, { code: 70, name: "v5.19" }, { code: 71, name: "v5.20（当前）" }
+  { code: 64, name: "v5.13" }, { code: 65, name: "v5.14" }, { code: 66, name: "v5.15" }, { code: 67, name: "v5.16" }, { code: 68, name: "v5.17" }, { code: 69, name: "v5.18" }, { code: 70, name: "v5.19" }, { code: 71, name: "v5.20" }, { code: 72, name: "v5.21（当前）" }
 ];
 var RAW = function(n){
   var t = Date.now();
@@ -609,7 +609,7 @@ function hotPayload(){
 
 function verName(b){
   for (var i=0;i<VERSIONS.length;i++) if (VERSIONS[i].code === b) return VERSIONS[i].name;
-  if (b > 71) return "v5.20 及以后（" + b + "）";
+  if (b > 72) return "v5.21 及以后（" + b + "）";
   if (b > 0 && b < 45) return "早期版本（" + b + "）";
   return "版本码 " + b;
 }
@@ -1047,10 +1047,44 @@ $("#b-off").onclick = function(){ quickSwitch(false, this); };
 /* ② 最低版本限制：列出全部历史版本，选一个「最低可用版本」即生成完整策略并发布。
    0 = 不限制 → 全部恢复；>0 → 低版本强制更新、当前及未来放行、兜底停用。
    enabled:false 用来覆盖读不懂版本规则的 v5.6 及更早客户端；v5.7+ 由 rules 精确放行。 */
-$("#mv-ver").innerHTML = '<option value="0">不限制（所有版本均可正常使用）</option>'
-  + VERSIONS.map(function(v){
-      return '<option value="' + v.code + '">' + v.name + ' · 版本码 ' + v.code + '</option>';
-    }).join("");
+/* 版本下拉统一渲染：运行时校准版本表后可重复调用（见 syncConsoleVersion）。 */
+function renderVerSelects(){
+  $("#mv-ver").innerHTML = '<option value="0">不限制（所有版本均可正常使用）</option>'
+    + VERSIONS.map(function(v){
+        return '<option value="' + v.code + '">' + v.name + ' · 版本码 ' + v.code + '</option>';
+      }).join("");
+  $("#r-ver").innerHTML = '<option value="all">所有版本（不限区间）</option>'
+    + '<option value="future">未来版本（≥ ' + VERSIONS[VERSIONS.length-1].code + '，含以后所有升级）</option>'
+    + '<option value="legacy">早期版本（≤ 48）</option>'
+    + VERSIONS.slice().reverse().map(function(v){
+        return '<option value="' + v.code + '">' + v.name + ' · 版本码 ' + v.code + '</option>';
+      }).join("");
+}
+renderVerSelects();
+
+/* 每次打开控制台都从同域 latest.json 校准版本表：发版只需更新 latest.json，
+   控制台便自动补出历史表里没有的新版本、把「（当前）」标过去，
+   不会再出现「安装包已升级、控制台还停在旧版本」的脱节。
+   离线或读取失败时静态表照常可用，不影响任何功能。 */
+function syncConsoleVersion(){
+  fetch("latest.json?t=" + Date.now(), { cache: "no-store" })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(j){
+      if (!j) return;
+      var b = Number(j.build) || 0, i, max = 0;
+      if (!b) return;
+      for (i = 0; i < VERSIONS.length; i++) max = Math.max(max, VERSIONS[i].code);
+      if (b <= max) return;                       // 表里已含最新版，无需改动
+      VERSIONS.push({ code: b, name: "v" + (j.name || b) });
+      for (i = 0; i < VERSIONS.length; i++)
+        VERSIONS[i].name = VERSIONS[i].name.replace("（当前）", "");
+      VERSIONS[VERSIONS.length - 1].name += "（当前）";
+      renderVerSelects();
+      try { $("#mv-ver").value = String(state.minBuild || 0); } catch (e) {}
+    })
+    .catch(function(){});
+}
+syncConsoleVersion();
 $("#mv-apply").onclick = async function(){
   var code = Number($("#mv-ver").value)||0;
   var need = code
@@ -1084,12 +1118,7 @@ $("#mv-apply").onclick = async function(){
 };
 
 /* ③ 按版本控制 */
-$("#r-ver").innerHTML = '<option value="all">所有版本（不限区间）</option>'
-  + '<option value="future">未来版本（≥ ' + VERSIONS[VERSIONS.length-1].code + '，含以后所有升级）</option>'
-  + '<option value="legacy">早期版本（≤ 48）</option>'
-  + VERSIONS.slice().reverse().map(function(v){
-      return '<option value="' + v.code + '">' + v.name + ' · 版本码 ' + v.code + '</option>';
-    }).join("");
+/* 版本下拉已在 renderVerSelects() 中统一渲染（含运行时校准后的重绘）。 */
 $("#r-ver").addEventListener("change", function(){
   var v = this.value;
   if (v === "all"){ $("#r-min").value = 0; $("#r-max").value = 0; }
