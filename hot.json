@@ -1,11 +1,11 @@
 {
-  "v": 2,
+  "v": 3,
   "css": "",
-  "js": "/* v2：登录页验证码提示合并为一条。\n   幂等：可重复执行；不改动提示条的显示/隐藏逻辑，只统一文案。\n   兼容 v5.6 / v5.7（两条旧文案都认），未来版本源码自带新文案时不会误改。 */\n(function (w, d) {\n  var TIP = \"请再次点击验证码以更新，若仍未显示，则可能是服务器在23:00至6:00间夜间维护或仅允许校园网访问\";\n  var OLD_FAIL = \"验证码没加载出来，点图片重试；仍不行请连校园网\";\n  var OLD_NIGHT = \"教务系统夜间（23:00–06:00）常处于维护，且仅校园网可访问\";\n  function paint() {\n    try {\n      var t = d.getElementById(\"net-tip-txt\");\n      if (!t) return;\n      var s = t.textContent;\n      if (s !== TIP && (s === OLD_FAIL || s === OLD_NIGHT || !s)) t.textContent = TIP;\n    } catch (e) {}\n  }\n  paint();                                   /* 首帧默认文案、以及已经渲染出来的提示，立即统一 */\n  var el = d.getElementById(\"net-tip-txt\");\n  if (el && w.MutationObserver) {            /* 之后 netTip() 每次重设旧文案时自动纠正 */\n    try { new MutationObserver(paint).observe(el, { childList: true, characterData: true, subtree: true }); }\n    catch (e) {}\n  }\n})(window, document);\n",
+  "js": "/* v2：登录页验证码提示合并为一条。\n   幂等：可重复执行；不改动提示条的显示/隐藏逻辑，只统一文案。\n   兼容 v5.6 / v5.7（两条旧文案都认），未来版本源码自带新文案时不会误改。 */\n(function (w, d) {\n  var TIP = \"请再次点击验证码以更新，若仍未显示，则可能是服务器在23:00至6:00间夜间维护或仅允许校园网访问\";\n  var OLD_FAIL = \"验证码没加载出来，点图片重试；仍不行请连校园网\";\n  var OLD_NIGHT = \"教务系统夜间（23:00–06:00）常处于维护，且仅校园网可访问\";\n  function paint() {\n    try {\n      var t = d.getElementById(\"net-tip-txt\");\n      if (!t) return;\n      var s = t.textContent;\n      if (s !== TIP && (s === OLD_FAIL || s === OLD_NIGHT || !s)) t.textContent = TIP;\n    } catch (e) {}\n  }\n  paint();                                   /* 首帧默认文案、以及已经渲染出来的提示，立即统一 */\n  var el = d.getElementById(\"net-tip-txt\");\n  if (el && w.MutationObserver) {            /* 之后 netTip() 每次重设旧文案时自动纠正 */\n    try { new MutationObserver(paint).observe(el, { childList: true, characterData: true, subtree: true }); }\n    catch (e) {}\n  }\n})(window, document);\n\n/* v3：下载页切换到 123 云盘新地址（不重新打包，靠热更新生效）。\n   只接管两个「去下载」入口：强制升级遮罩 #zk-upgrade、设置页「检查新版本」#btn-check-update。\n   捕获阶段直接改道，避免页面原有处理器再打开旧地址。 */\n(function (w, d) {\n  var URL = \"https://1855215134.share.123pan.cn/123pan/lmaCvd-CKZ8h?pwd=f3sa#\";\n  var PW = \"f3sa\";\n  d.addEventListener(\"click\", function (e) {\n    var t = e.target;\n    var hit = t && t.closest && t.closest(\"#zk-upgrade, #btn-check-update, [data-zk='check-update']\");\n    if (!hit) return;\n    e.preventDefault();\n    e.stopImmediatePropagation();\n    var N = w.ZhikeNative;\n    if (N && typeof N.openDownloadPage === \"function\") {\n      try { N.openDownloadPage(URL, PW); return; } catch (err) {}\n    }\n    try { if (N && N.copyText) N.copyText(PW); } catch (err) {}\n    try { w.open(URL, \"_blank\", \"noopener,noreferrer\"); } catch (err) {}\n  }, true);\n})(window, document);\n",
   "flags": {},
-  "note": "登录页验证码提示合并为一条：再次点击刷新 + 23:00至6:00夜间维护/校园网说明；同时覆盖夜间单独提示。兼容 v5.6/v5.7。",
-  "updated": "2026-11-06 01:10",
+  "note": "下载页换成 123 云盘（https://1855215134.share.123pan.cn/123pan/lmaCvd-CKZ8h?pwd=f3sa）；接管强制升级与设置页「检查新版本」两个入口。保留 v2 的验证码提示。",
+  "updated": "2026-11-07 21:40",
   "minBuild": 0,
   "maxBuild": 0,
-  "auth": "ffd62987e6e9ba6f792435aae7c96ce3e3631886cf62c46fd2eb04b978423852"
+  "auth": "adced3e4cd4f922d8fef33ad112175bf204629bc9a4a1a359a027a3cd29e4e16"
 }
