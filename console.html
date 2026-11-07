@@ -323,7 +323,7 @@
     <div class="simbox" id="sim">
       <b>规则模拟器</b> · 在下面填一个版本码，立刻看这台客户端会怎样：
       <div class="row" style="margin-top:8px">
-        <input id="s-build" type="number" min="0" step="1" value="68" style="flex:2">
+        <input id="s-build" type="number" min="0" step="1" value="69" style="flex:2">
         <button class="btn ghost" id="s-go" style="flex:1;min-width:90px">模拟</button>
       </div>
       <div id="sim-out" style="margin-top:8px">—</div>
@@ -438,7 +438,7 @@
 <script>
 "use strict";
 var REPO = "PWHbut/zk-guard", BRANCH = "main";
-var CONSOLE_VER = "5.17.0";     // 控制台版本；与客户端 v5.16 对齐，页面可见可核对
+var CONSOLE_VER = "5.18.0";     // 控制台版本；与客户端 v5.16 对齐，页面可见可核对
 var FILE = "guard.json", HFile = "hot.json";
 /* 真实 versionCode 映射：从各版 APK 的 aapt badging 与 build.gradle 反查得到。 */
 var VERSIONS = [
@@ -449,7 +449,7 @@ var VERSIONS = [
   { code: 57, name: "v5.6" }, { code: 58, name: "v5.7" }, { code: 59, name: "v5.8" },
   { code: 60, name: "v5.9" }, { code: 61, name: "v5.10" },
   { code: 62, name: "v5.11" }, { code: 63, name: "v5.12" },
-  { code: 64, name: "v5.13" }, { code: 65, name: "v5.14" }, { code: 66, name: "v5.15" }, { code: 67, name: "v5.16" }, { code: 68, name: "v5.17（当前）" }
+  { code: 64, name: "v5.13" }, { code: 65, name: "v5.14" }, { code: 66, name: "v5.15" }, { code: 67, name: "v5.16" }, { code: 68, name: "v5.17" }, { code: 69, name: "v5.18（当前）" }
 ];
 var RAW = function(n){
   var t = Date.now();
@@ -469,6 +469,9 @@ var PUSH = function(n){ return "https://api.github.com/repos/" + REPO + "/conten
 var state = { enabled: true, reason: "", minBuild: 0, def: "allow", rules: [], updated: "", rev: 0 };
 var hot = { v: 1, css: "", js: "", flags: {}, note: "", updated: "" };
 var ruleMode = "block";
+/* 最近一次成功发布出去的 rev（跨刷新保留）。节点回读到的 rev 比它小时，
+   说明读到的是滞后缓存，界面不能被它改回去。 */
+var lastPublishedRev = Number(localStorage.getItem("zk-last-rev") || 0) || 0;
 
 function $(s){ return document.querySelector(s); }
 function toast(t){
@@ -592,7 +595,7 @@ function hotPayload(){
 
 function verName(b){
   for (var i=0;i<VERSIONS.length;i++) if (VERSIONS[i].code === b) return VERSIONS[i].name;
-  if (b > 68) return "v5.17 及以后（" + b + "）";
+  if (b > 69) return "v5.18 及以后（" + b + "）";
   if (b > 0 && b < 45) return "早期版本（" + b + "）";
   return "版本码 " + b;
 }
@@ -688,9 +691,16 @@ async function loadCred(){
   if (CRED) return CRED;
   var rs = await Promise.all(CRED_URLS.map(function(u){
     var sep = u.indexOf("?") >= 0 ? "&" : "?";
-    return fetch(u + sep + "t=" + Date.now(), { cache: "no-store", credentials: "omit" })
+    /* 必须带超时：某个源要是被墙成「连上但不返回」，Promise.all 会永远挂着，
+       整页就停在「读取中…」——初始化被它卡死，后面的配置读取根本不会执行。 */
+    var ac = (typeof AbortController !== "undefined") ? new AbortController() : null;
+    var tm = ac ? setTimeout(function(){ ac.abort(); }, 3500) : 0;
+    var opt = { cache: "no-store", credentials: "omit" };
+    if (ac) opt.signal = ac.signal;
+    return fetch(u + sep + "t=" + Date.now(), opt)
       .then(function(r){ return r.ok ? r.json() : null; })
-      .catch(function(){ return null; });
+      .catch(function(){ return null; })
+      .then(function(v){ if (tm) clearTimeout(tm); return v; });
   }));
   for (var i = 0; i < rs.length; i++){
     var c = rs[i];
@@ -750,13 +760,20 @@ function renderHot(){
 
 /* 4 源并发，全回来后挑「最新」的一份：guard.json 看 rev，其余看 updated。
    GitHub API 返回 base64 包装，要解一层；单源超时避免被慢源永久拖住。 */
+/* 解锁后的发布凭据：带认证读 GitHub API（5000 次/小时）。
+   匿名读只有 60 次/小时，控制台一刷新就打两次、发布自检再打三次，
+   很容易被限流；一旦 403，页面只能读到 jsDelivr 的 12 小时旧缓存，
+   于是「刚点停用，刷新又变回可用」——这就是控制台看起来完全失效的直接原因。 */
+var CTX_TK = "";
 async function fetchOne(url, name){
   var ac = new AbortController();
   var timer = setTimeout(function(){ ac.abort(); }, 3500);
   try {
     var sep = url.indexOf("?") >= 0 ? "&" : "?";
-    var r = await fetch(url + sep + "t=" + Date.now(),
-                        { cache: "no-store", signal: ac.signal, credentials: "omit" });
+    var opt = { cache: "no-store", signal: ac.signal, credentials: "omit" };
+    if (CTX_TK && url.indexOf("api.github.com") >= 0)
+      opt.headers = { Authorization: "Bearer " + CTX_TK, Accept: "application/vnd.github+json" };
+    var r = await fetch(url + sep + "t=" + Date.now(), opt);
     clearTimeout(timer);
     if (!r.ok) return null;
     var j = await r.json();
@@ -791,18 +808,26 @@ async function readJson(name){
     if (!j) continue;
     if (cfgNewer(j, best, name)) { best = j; bestSrc = labels[i] || "源" + (i + 1); }
   }
-  if (name === "guard.json") $("#m-src").textContent = best ? bestSrc : "全部不可达";
-  return best ? { data: best, src: bestSrc } : null;
+  return best ? { data: best, src: bestSrc, auth: bestSrc === "GitHub API" } : null;
 }
 async function loadKeyHash(){
   var r = await readJson("key.json");
   var k = r && r.data;
   return (k && k.hash) ? String(k.hash) : "";
 }
-async function load(){
+async function load(opts){
+  opts = opts || {};
+  var protect = (opts.minRev != null) ? Number(opts.minRev) || 0 : lastPublishedRev;
   var gr = await readJson(FILE);
   var g = gr && gr.data;
   if (g && typeof g.enabled === "boolean"){
+    /* 刚发布的 rev：某个节点回读到的可能还是上一版内容。
+       旧内容绝不能把界面改回去 ——「点了停用、刷新一下又变全局可用」就是这里被覆盖的。 */
+    if (protect && Number(g.rev || 0) < protect){
+      if ($("#m-src"))
+        $("#m-src").textContent = gr.src + " · 滞后（rev " + (Number(g.rev)||0) + " < 已发布 " + protect + "）";
+      return;
+    }
     state = {
       enabled: g.enabled,
       reason: g.reason || "",
@@ -814,7 +839,11 @@ async function load(){
     };
     render();
     try { $("#mv-ver").value = String(state.minBuild || 0); } catch (e) {}
+    if ($("#m-src"))
+      $("#m-src").textContent = gr.src + (gr.auth ? " · 权威" : " · 可能滞后")
+        + (lastPublishedRev && Number(g.rev||0) >= lastPublishedRev ? " · 已含本次发布" : "");
   } else {
+    if ($("#m-src")) $("#m-src").textContent = "全部不可达";
     $("#st-title").textContent = "读取失败";
     $("#st-sub").textContent = "检查网络后点右上角「强制刷新配置」重试";
   }
@@ -877,6 +906,7 @@ async function push(name, obj, msg, btn, idle){
     var key = keyValue();
     if (!key) { toast("请先填入控制台密钥"); return; }
     var tk = await unlockCred(key);      // 密钥不对会明确报错，不会静默失败
+    CTX_TK = tk;                          // 之后所有读操作都带认证，避免匿名 60 次/小时被限流
     var head = { Authorization: "Bearer " + tk, Accept: "application/vnd.github+json" };
 
     // ② 读当前文件 sha
@@ -918,13 +948,21 @@ async function push(name, obj, msg, btn, idle){
     var sync = await probeSources(name, want);
     var lag = sync.filter(function(x){ return !x.hit; }).map(function(x){ return x.name; });
     var okN = sync.length - lag.length;
+    if (name !== "hot.json"){
+      lastPublishedRev = Number(obj.rev) || 0;
+      try { localStorage.setItem("zk-last-rev", String(lastPublishedRev)); } catch (e) {}
+    }
     setChannel("密钥直连 CDN · 已发布 " + (name === "hot.json" ? "v" + obj.v : "rev " + obj.rev)
-               + " · 节点 " + okN + "/" + sync.length + " 已同步", true);
+               + (okN ? " · 节点 " + okN + "/" + sync.length + " 已同步" : " · 已写入，节点扩散中"), true);
+    /* 写入本身已经过 ⑤ 的权威回读确认；这里只说「传播」状态，别让 0/3 看起来像失败 */
     toast(name === "hot.json"
-      ? "已发布热更新 · 节点 " + okN + "/" + sync.length + " 已同步"
-      : "已发布 rev " + obj.rev + " · 节点 " + okN + "/" + sync.length + " 已同步"
-        + (lag.length ? "（" + lag.join("、") + " 稍后跟上）" : "，客户端 1 分钟内生效"));
-    setTimeout(load, 1200);
+      ? "已发布热更新" + (okN ? " · 节点 " + okN + "/" + sync.length + " 已同步" : " · 节点扩散中")
+      : (okN
+          ? "已发布 rev " + obj.rev + " · 节点 " + okN + "/" + sync.length + " 已同步"
+            + (lag.length ? "（" + lag.join("、") + " 跟上中）" : "，客户端 1 分钟内生效")
+          : "已发布 rev " + obj.rev + " · 权威已确认，CDN 节点扩散中（1~5 分钟）"));
+    /* 回读时带上刚发布的 rev：滞后节点读回来的旧内容不再覆盖界面状态 */
+    setTimeout(function(){ load({ minRev: lastPublishedRev }); }, 1200);
   } catch (err) {
     var m = (err && err.message) ? err.message : "网络错误";
     // 明确失败：绝不假装成功，也不退回任何手动提交流程
@@ -950,6 +988,21 @@ async function ensureKey(need){
 function rememberKey(){
   if ($("#i-remember").checked && keyValue()) localStorage.setItem("zk-key", keyValue());
   else localStorage.removeItem("zk-key");
+  tryUnlock();
+}
+/* 密钥一填好就换出凭据，让后面每一次读都带认证（5000 次/小时）。
+   不这样做的话，只有点「发布」那一刻才解锁，之前所有读取都是匿名的 60 次/小时，
+   一旦被限流，页面显示的就是 jsDelivr 上那份 12 小时旧缓存。 */
+var _tkKey = "", _tkTimer = null;
+function tryUnlock(){
+  clearTimeout(_tkTimer);
+  _tkTimer = setTimeout(async function(){
+    var k = keyValue();
+    if (!k || k === _tkKey) return;
+    _tkKey = k;
+    try { CTX_TK = await unlockCred(k); }
+    catch (e) { CTX_TK = ""; _tkKey = ""; }
+  }, 400);
 }
 
 /* ① 一键控制：点按钮即发布，不再需要「选状态 → 再点提交」。
@@ -985,8 +1038,10 @@ $("#mv-apply").onclick = async function(){
   var code = Number($("#mv-ver").value)||0;
   var need = code
     ? "确认把最低可用版本设为 " + verName(code) + "（版本码 " + code + "）？\n\n"
-      + "低于它的客户端会弹出无法取消的更新提示，必须升级后才能使用；"
-      + "该版本及之后的所有版本正常可用。\n\n本机缓存数据不会丢失。"
+      + "只有版本码 ≤ " + (code - 1) + " 的客户端会被弹窗拦住；"
+      + "版本码 " + code + " 及以上的客户端照常可用。\n\n"
+      + "⚠ 注意：「最低 " + code + "」意味着该版本本身是放行的；拿它自测不会被拦，这是正常的，不是没生效。\n\n"
+      + "本机缓存数据不会丢失。"
     : "确认取消最低版本限制，恢复所有版本可用？";
   var key = await ensureKey(need);
   if (!key) return;
@@ -1123,8 +1178,20 @@ $("#b-verify").onclick = async function(){
 $("#ver-badge").textContent = "v" + CONSOLE_VER;
 if (localStorage.getItem("zk-key")) $("#i-key").value = localStorage.getItem("zk-key");
 setSeg("#r-mode", ruleMode);
-initChannel();        // 检查受保护凭据是否可读，操作员零配置
-load();
+/* 页面一打开就用「记住的密钥」换出发布凭据：带认证读 GitHub API（5000 次/小时）。
+   匿名读只有 60 次/小时，一被限流就只能读 jsDelivr 的 12 小时旧缓存，
+   页面显示的状态会和真实配置相反。解锁失败/超时也必须继续往下读，不能卡在「读取中」。 */
+function timeout(ms){ return new Promise(function(_, rej){ setTimeout(function(){ rej(new Error("timeout")); }, ms); }); }
+async function boot(){
+  try { await Promise.race([initChannel(), timeout(3000)]); } catch (e) {}
+  var k = keyValue();
+  if (k){
+    try { CTX_TK = await Promise.race([unlockCred(k), timeout(3000)]); _tkKey = k; }
+    catch (e) { CTX_TK = ""; }
+  }
+  load();
+}
+boot();
 </script>
 </body>
 </html>
