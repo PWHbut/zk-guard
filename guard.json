@@ -2,11 +2,11 @@
   "enabled": false,
   "minBuild": 0,
   "reason": "",
-  "updated": "2026-11-07 18:11",
-  "rev": 1794046324,
+  "updated": "2026-11-07 18:12",
+  "rev": 1794046331,
   "default": "block",
   "rules": [],
   "consoleVer": "5.17.0",
-  "auth": "3a8894975052e2ad78c7cf38952adbf511b22841c2f9601b0097f8d3a0a082e7",
-  "authV2": "559f6d4931191bd47cb38c833302388e74dca024698429db25107c45a1e121f8"
+  "auth": "573b8e17e0ddd93a2fb7b761492f88ed315107e69754e0db462e5df3e4287efd",
+  "authV2": "0bbd0d5a9139d9d6ea4445a9431b17c63ce365a8d266e98741b6531c185418c5"
 }
