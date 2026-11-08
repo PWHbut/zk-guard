@@ -1,9 +1,9 @@
 {
-  "build": 72,
-  "name": "5.21",
-  "size": 27916494,
-  "sha256": "4af2a3bcfca51dd86bbfe7c3860bd945926e72825c66d651a50476b61d4f0e95",
-  "url": "https://github.com/PWHbut/zk-guard/releases/download/v5.21/zhike-5.21.apk",
-  "note": "App 内直接下载安装，不用跳浏览器",
-  "updated": "2026-11-08 11:58"
+  "build": 73,
+  "name": "5.22",
+  "size": 27917474,
+  "sha256": "32d93d973adfeca83af59e9c9c20f446747adc38b6143077b1f0eacfedcf1e46",
+  "page": "https://1855215134.share.123pan.cn/123pan/lmaCvd-nid8h?pwd=f3sa#",
+  "note": "点「检查新版本」将用系统浏览器打开下载页，提取码 f3sa 自动复制",
+  "updated": "2026-11-08 16:40"
 }
