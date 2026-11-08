@@ -1,9 +1,9 @@
 {
   "build": 72,
   "name": "5.21",
-  "size": 27916498,
-  "sha256": "31acd494b6be5b61795a1872659c0f84b07be9a14c56bd4804fc9d1f3d1d75ac",
+  "size": 27916494,
+  "sha256": "4af2a3bcfca51dd86bbfe7c3860bd945926e72825c66d651a50476b61d4f0e95",
   "url": "https://github.com/PWHbut/zk-guard/releases/download/v5.21/zhike-5.21.apk",
   "note": "App 内直接下载安装，不用跳浏览器",
-  "updated": "2026-11-08 02:35"
+  "updated": "2026-11-08 11:58"
 }
