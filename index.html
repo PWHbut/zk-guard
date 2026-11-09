@@ -365,6 +365,24 @@
     <label><em>开关默认值（JSON，例如 {"examcd": false}）</em><textarea id="h-flags" class="code" placeholder="{}">{}</textarea></label>
     <label><em>文案替换（JSON：{"选择器":"新文本"}）</em><textarea id="h-text" class="code" placeholder='{"#crumb":"当前位置"}'></textarea></label>
     <label><em>通用配置（JSON：合并进 window.__zkCfg）</em><textarea id="h-cfg" class="code" placeholder='{"examcd":false,"kpiCount":4}'>{}</textarea></label>
+    <details id="cloud-panel" style="margin:10px 0 4px;border:1px solid var(--line,#e3e8f0);border-radius:10px;padding:10px 12px;background:var(--bg,#fafbfe)">
+      <summary style="cursor:pointer;font-weight:600;font-size:13px">☁ 云控配置（不升级版本，在线改功能）</summary>
+      <p class="tip" style="margin:8px 0;line-height:1.7">
+        下列键写进上方「通用配置」后，客户端应用热更新时立即生效：<b>notice</b> 首页公告条、
+        <b>features</b> 功能开关（quickLinks / inAppUpdate）、<b>schemes</b> 一键直达链（按动作名覆盖 acts / schemes）、
+        <b>update</b> 应用内下载源与主备下载页、<b>quickActions / quickGroups</b> 目录与动作表。
+        点模板按钮会把示例<b>合并</b>进 JSON，不会覆盖你已填好的其它键。
+      </p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0">
+        <button type="button" class="btn ghost" data-tpl="notice">＋ 首页公告条</button>
+        <button type="button" class="btn ghost" data-tpl="features">＋ 功能开关</button>
+        <button type="button" class="btn ghost" data-tpl="schemes">＋ 扫码直达链</button>
+        <button type="button" class="btn ghost" data-tpl="update">＋ 下载源 / 备用页</button>
+        <button type="button" class="btn ghost" data-tpl="directory">＋ 综合目录动作</button>
+      </div>
+      <div id="cloud-keys" style="font-size:11.5px;color:var(--ink-4,#7b8494);margin:6px 0">当前云控键：—</div>
+      <pre id="cloud-pre" style="background:#f6f8fc;border:1px solid #e3e8f0;border-radius:8px;padding:10px;font-size:11px;max-height:170px;overflow:auto;margin:0;white-space:pre-wrap">{}</pre>
+    </details>
     <label><em>导航布局（JSON：order/hide/rename/disabled）</em><textarea id="h-nav" class="code" placeholder='{"hide":["cet"],"rename":{"kb":"课表V2"}}'></textarea></label>
     <label><em>说明（仅供自己记录）</em><input id="h-note" placeholder="例如：修正成绩页间距"></label>
     <div class="row" style="gap:10px">
@@ -1197,6 +1215,43 @@ $("#h-copy").onclick = function(){
                                                               function(){ toast("复制失败，请手动选中"); });
   else toast("请手动选中下方 JSON 复制");
 };
+/* v5.23-fix1 云控模板：把示例合并进 h-cfg，不覆盖其它键；发布后用户无需升级版本即生效 */
+var CLOUD_TPL = {
+  notice: { notice: { text: "寒假选课提醒：12 月 20 日开放，记得提前选课", tone: "info" } },
+  features: { features: { quickLinks: true, inAppUpdate: true } },
+  schemes: { schemes: { "微信扫一扫": {
+    acts: ["com.tencent.mm.plugin.scanner.ui.BaseScanUI"],
+    schemes: ["weixin://scanqrcode", "weixin://dl/scanqrcode"] } } },
+  update: { update: {
+    sources: ["https://ghfast.top/https://github.com/PWHbut/zk-guard/releases/download/v5.23/zhike-5.23-fix1.apk"],
+    pages: ["https://1855215134.share.123pan.cn/123pan/lmaCvd-nid8h?pwd=f3sa#", "https://wwaxc.lanzouq.com/b01i5zis9g"],
+    pw: "f3sa" } },
+  directory: { quickActions: [
+    { name: "校园一码通", kind: "web", app: "浏览器", icon: "码",
+      desc: "学校统一身份认证", url: "https://example.edu.cn/" } ] }
+};
+function cloudSync(){
+  var o = {};
+  try { o = JSON.parse($("#h-cfg").value || "{}") || {}; } catch(e){ o = {}; }
+  $("#cloud-pre").textContent = JSON.stringify(o, null, 2);
+  var keys = Object.keys(o);
+  $("#cloud-keys").textContent = keys.length ? ("当前云控键：" + keys.join(" · ")) : "当前云控键：—";
+  try { $("#h-preview").textContent = JSON.stringify(hotPayload(), null, 2); } catch(e){}
+}
+document.querySelectorAll("[data-tpl]").forEach(function(b){
+  b.addEventListener("click", function(){
+    var t = CLOUD_TPL[b.getAttribute("data-tpl")]; if(!t) return;
+    var o = {}; try { o = JSON.parse($("#h-cfg").value || "{}") || {}; } catch(e){ o = {}; }
+    Object.keys(t).forEach(function(k){ o[k] = Object.assign({}, o[k] || {}, t[k]); });
+    $("#h-cfg").value = JSON.stringify(o, null, 2);
+    $("#h-cfg").dispatchEvent(new Event("input"));
+    cloudSync();
+    toast("已合并云控模板：" + Object.keys(t).join("、"));
+  });
+});
+$("#h-cfg").addEventListener("input", cloudSync);
+cloudSync();
+
 ["h-v","h-css","h-js","h-flags","h-text","h-cfg","h-nav","h-note","h-min","h-max","i-key"].forEach(function(id){
   $("#" + id).addEventListener("input", function(){
     renderHot();
