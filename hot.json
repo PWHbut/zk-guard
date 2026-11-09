@@ -1,11 +1,82 @@
 {
-  "v": 6,
+  "v": 7,
   "css": "",
-  "js": "/* v6 · 修复 App 内更新连不上 GitHub Release 资产。\n   现象：点「立即更新」报 \"Failed to connect to release-assets.githubusercontent.com/127.0.0.1:443\"。\n   根因：latest.json 的下载地址指向 GitHub Release，其资产域在国内常被解析到 127.0.0.1，\n        Updater.java 的 HttpURLConnection 直连必然失败，错误原文被回贴到下载卡片上。\n   修复：所有更新入口统一改用系统浏览器打开新的 123 云盘分享页；openDownloadPage\n        会复制提取码 f3sa 并拉起浏览器，不再发起应用内下载，故不可能再出现该报错。\n   兼容：window 捕获阶段抢在历史 v5 补丁（document 捕获、指向 GitHub v5.20）之前；\n        同时覆盖全局函数，应对 app.js 自带 window 捕获监听器的调用。 */\n(function (w, d) {\n  var URL = \"https://1855215134.share.123pan.cn/123pan/lmaCvd-nid8h?pwd=f3sa#\";\n  var PW  = \"f3sa\";\n  var last = 0;\n  function open() {\n    var now = Date.now();\n    if (now - last < 800) return;            /* 一次点击只打开一次 */\n    last = now;\n    var N = w.ZhikeNative;\n    if (N && typeof N.openDownloadPage === \"function\") {\n      try { N.openDownloadPage(URL, PW); return; } catch (e) {}\n    }\n    if (N && typeof N.openUrl === \"function\") {\n      try { N.openUrl(URL); return; } catch (e) {}\n    }\n    try { w.open(URL, \"_blank\", \"noopener,noreferrer\"); } catch (e) {}\n  }\n  /* app.js 的 window 捕获监听器与强制升级按钮最终都会调用这些全局函数 */\n  w.checkUpdate        = open;\n  w.startApkUpdate     = open;\n  w.openDownloadLegacy = open;\n  w.showUpdSheet       = open;\n  /* 老版本没有 app.js 的 window 监听器；这条监听器同时压制历史 v5 补丁的改道 */\n  if (!w.__zkUpdHotV6) {\n    w.__zkUpdHotV6 = 1;\n    w.addEventListener(\"click\", function (e) {\n      var t = e.target;\n      if (!t || !t.closest) return;\n      if (t.closest(\"#zk-upgrade, #btn-check-update, [data-zk='check-update']\")) {\n        e.preventDefault();\n        e.stopImmediatePropagation();\n        open();\n      }\n    }, true);\n  }\n})(window, document);\n",
+  "js": "/* v7 · 云控：存量包的更新入口防护 + 在线修正微信一键直达链（cfg.quickActions）。\n   与 v6 的关键差异：带 apkUpdateMulti 桥的新包（v5.23-fix1）完全不被热更干预，\n   由源码走应用内多源下载；只有老包才沿用 v6 的浏览器下载页改道。 */\n(function (w, d) {\n  var N = w.ZhikeNative;\n  var legacy = !N || typeof N.apkUpdateMulti !== \"function\";\n  if (!legacy) return;\n  var URL = \"https://1855215134.share.123pan.cn/123pan/lmaCvd-nid8h?pwd=f3sa#\";\n  var PW  = \"f3sa\";\n  var last = 0;\n  function open() {\n    var now = Date.now();\n    if (now - last < 800) return;\n    last = now;\n    if (N && typeof N.openDownloadPage === \"function\") {\n      try { N.openDownloadPage(URL, PW); return; } catch (e) {}\n    }\n    if (N && typeof N.openUrl === \"function\") {\n      try { N.openUrl(URL); return; } catch (e) {}\n    }\n    try { w.open(URL, \"_blank\", \"noopener,noreferrer\"); } catch (e) {}\n  }\n  w.canInAppDownload = function(){ return false; };\n  w.checkUpdate = open; w.startApkUpdate = open;\n  w.openDownloadLegacy = open; w.showUpdSheet = open;\n  if (!w.__zkUpdHotV7) {\n    w.__zkUpdHotV7 = 1;\n    w.addEventListener(\"click\", function (e) {\n      var t = e.target;\n      if (!t || !t.closest) return;\n      if (t.closest(\"#zk-upgrade, #btn-check-update, [data-zk='check-update']\")) {\n        e.preventDefault(); e.stopImmediatePropagation(); open();\n      }\n    }, true);\n  }\n})(window, document);",
   "flags": {},
-  "note": "修复 App 内更新连不上 GitHub Release（release-assets 被解析到 127.0.0.1）；所有更新入口改用浏览器打开新 123 云盘下载页 lmaCvd-nid8h",
-  "updated": "2026-11-08 15:10",
+  "cfg": {
+    "quickActions": [
+      {
+        "name": "微信扫一扫",
+        "kind": "scheme",
+        "app": "微信",
+        "icon": "扫",
+        "tone": "wx",
+        "desc": "扫一扫 · 校园码 / 付款码",
+        "pkg": "com.tencent.mm",
+        "acts": [
+          "com.tencent.mm.plugin.scanner.ui.BaseScanUI"
+        ],
+        "schemes": [
+          "weixin://scanqrcode",
+          "weixin://dl/scanqrcode",
+          "weixin://dl/scan"
+        ],
+        "okHint": "已打开微信扫一扫",
+        "hint": "未能直接打开微信扫一扫，请点右上角「＋」→「扫一扫」"
+      },
+      {
+        "name": "支付宝扫一扫",
+        "kind": "scheme",
+        "app": "支付宝",
+        "icon": "扫",
+        "tone": "ali",
+        "desc": "扫一扫 · 扫码 / 校园码",
+        "pkg": "com.eg.android.AlipayGphone",
+        "acts": [
+          "com.alipay.mobile.scan.as.main.MainCaptureActivity"
+        ],
+        "schemes": [
+          "alipays://platformapi/startapp?appId=10000007",
+          "alipayqr://platformapi/startapp?saId=10000007",
+          "alipay://platformapi/startapp?appId=10000007"
+        ],
+        "okHint": "已打开支付宝扫一扫",
+        "hint": "未能直接打开支付宝扫一扫，请点首页「扫一扫」"
+      },
+      {
+        "name": "支付宝付款码",
+        "kind": "scheme",
+        "app": "支付宝",
+        "icon": "付",
+        "tone": "ali",
+        "desc": "付款码 / 乘车码 · 食堂 / 公交",
+        "pkg": "com.eg.android.AlipayGphone",
+        "acts": [
+          "com.alipay.mobile.onsitepay9.payer.OspTabHostActivity"
+        ],
+        "schemes": [
+          "alipays://platformapi/startapp?appId=20000056",
+          "alipayqr://platformapi/startapp?saId=20000056",
+          "alipay://platformapi/startapp?appId=20000056",
+          "alipay://platformapi/startapp?appId=200011235"
+        ],
+        "okHint": "已打开支付宝付款码",
+        "hint": "未能直接打开付款码，请点「付钱 / 收钱」；乘车码在「出行」里"
+      }
+    ],
+    "update": {
+      "pages": [
+        "https://1855215134.share.123pan.cn/123pan/lmaCvd-nid8h?pwd=f3sa#",
+        "https://wwaxc.lanzouq.com/b01i5zis9g"
+      ],
+      "pw": "f3sa"
+    }
+  },
+  "text": {},
+  "nav": {},
+  "note": "云控：在线修正微信直达链、下发主备下载页；新包由源码自行处理应用内多源下载",
+  "updated": "2026-11-10 00:17",
   "minBuild": 0,
   "maxBuild": 0,
-  "auth": "b92e14e5bd67e02b8b70b0ec3ecf7c7b7d0aaff51b3b1818abce66b7bb553d4d"
+  "auth": "8bec6d8afc2893c4b1015c5a247acc773246c731c688e3769fc1f2720e3f1d70"
 }
