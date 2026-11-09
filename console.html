@@ -611,13 +611,17 @@ function hotPayload(){
   try { nav = JSON.parse($("#h-nav").value || "{}") || {}; } catch (e) { throw new Error("导航布局不是合法 JSON"); }
   var v = Number($("#h-v").value) || 1;
   var o = { v: v, css: $("#h-css").value || "", js: $("#h-js").value || "", flags: flags,
-            text: text, cfg: cfg, nav: nav,
+            cfg: cfg,
             note: $("#h-note").value || "", updated: today(),
             minBuild: Number(($("#h-min") || {}).value) || 0,
             maxBuild: Number(($("#h-max") || {}).value) || 0 };
   var key = ($("#i-key") && $("#i-key").value || "").trim();
   if (key) {
     // 签名覆盖全部内容字段；客户端用同一公式校验，旧客户端只验前三项仍兼容
+    // 空 text/nav 不写进补丁（老客户端的 applyHotNav({}) 会压扁图标），
+    // 但签名公式仍按 {} 参与，保证与客户端 hotAuthorized() 的「|| {}」一致
+    if (Object.keys(text).length) o.text = text;
+    if (Object.keys(nav).length) o.nav = nav;
     var body = o.css + "|" + o.js + "|" + JSON.stringify(flags) + "|" +
                JSON.stringify(cfg) + "|" + JSON.stringify(text) + "|" + JSON.stringify(nav);
     o.auth = sha256Hex(key + ":" + v + ":" + sha256Hex(body));
