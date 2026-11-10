@@ -1,8 +1,8 @@
 {
-  "build": 74,
-  "name": "5.23",
-  "size": 27928662,
-  "sha256": "16f3c8b80224f90bc6fed16e1b91a300c9055733bd5645d7a0fd7ad76e97abc5",
+  "build": 75,
+  "name": "5.24",
+  "size": 27932794,
+  "sha256": "123a026c439ceb19f2b899d25569361a6beffaa1f511916872d346017327000b",
   "page": "https://1855215134.share.123pan.cn/123pan/lmaCvd-nid8h?pwd=f3sa#",
   "pages": [
     "https://1855215134.share.123pan.cn/123pan/lmaCvd-nid8h?pwd=f3sa#",
@@ -10,12 +10,12 @@
   ],
   "pw": "f3sa",
   "direct": true,
-  "url": "https://github.com/PWHbut/zk-guard/releases/download/v5.23/zhike-5.23-fix2.apk",
+  "url": "https://github.com/PWHbut/zk-guard/releases/download/v5.24/zhike-5.24.apk",
   "sources": [
-    "https://ghfast.top/https://github.com/PWHbut/zk-guard/releases/download/v5.23/zhike-5.23-fix2.apk",
-    "https://gh-proxy.com/https://github.com/PWHbut/zk-guard/releases/download/v5.23/zhike-5.23-fix2.apk",
-    "https://github.com/PWHbut/zk-guard/releases/download/v5.23/zhike-5.23-fix2.apk"
+    "https://ghfast.top/https://github.com/PWHbut/zk-guard/releases/download/v5.24/zhike-5.24.apk",
+    "https://gh-proxy.com/https://github.com/PWHbut/zk-guard/releases/download/v5.24/zhike-5.24.apk",
+    "https://github.com/PWHbut/zk-guard/releases/download/v5.24/zhike-5.24.apk"
   ],
   "note": "点「检查新版本」自动从多个下载源在应用内下载安装；提取码 f3sa",
-  "updated": "2026-11-10 02:08"
+  "updated": "2026-11-10 21:58"
 }
